@@ -12,7 +12,7 @@ Text_UBO :: struct {
 
 Text :: struct {
 	font:   ^ve.Font,
-	pos:    vec2,
+	pos:    vec3,
 	size:   f32,
 	text:   string,
 	mesh:   ve.Mesh,
@@ -24,7 +24,7 @@ Text :: struct {
 create_text :: proc(
 	font: ^ve.Font,
 	text: string,
-	position: vec2,
+	position: vec3,
 	color: vec3,
 	size: f32,
 	loc := #caller_location,
@@ -54,7 +54,7 @@ create_text :: proc(
 	}
 }
 
-text_set_position :: proc(text: ^Text, pos: vec2) {
+text_set_position :: proc(text: ^Text, pos: vec3) {
 	text.pos = pos
 }
 
@@ -79,8 +79,17 @@ text_set_string :: proc(text: ^Text, text_str: string, loc := #caller_location) 
 	text.height = height
 }
 
+renderer_draw_text :: proc(text: ^Text, trf: mat4) {
+	renderer_draw_mesh(&G.r, text.mesh, R.pipelines.text, trf, ve.Handles{h0 = text.ubo})
+}
+
 draw_text :: proc(text: ^Text, pipeline: ve.Graphics_Pipeline) {
-	ve.draw_mesh(text.mesh, pipeline, glsl.mat4Translate(vec3{text.pos.x, text.pos.y, 1}), ve.Handles{h0 = text.ubo})
+	ve.draw_mesh(
+		text.mesh,
+		pipeline,
+		glsl.mat4Translate(vec3{text.pos.x, text.pos.y, text.pos.z}),
+		ve.Handles{h0 = text.ubo},
+	)
 }
 
 draw_uitext :: proc(text: ^Text) {

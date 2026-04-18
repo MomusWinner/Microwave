@@ -13,8 +13,8 @@ create_menu_scene :: proc() -> Scene {
 start_text: Text
 
 menu_scene_init :: proc(s: ^Scene) {
-	start_text = create_text(&R.fonts.kiwisoda, "Press Enter to Start game", {0, -4.0}, {1, 1, 1}, 0.01)
-	text_set_position(&start_text, start_text.pos - {start_text.width / 2, start_text.height / 2 + 0.3})
+	start_text = create_text(&R.fonts.kiwisoda, "Press Enter to Start game", {0, -4.0, 0}, {1, 1, 1}, 0.01)
+	text_set_position(&start_text, start_text.pos - {start_text.width / 2, start_text.height / 2 + 0.3, 1})
 }
 
 menu_scene_update :: proc(s: ^Scene) {

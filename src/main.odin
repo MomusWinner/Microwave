@@ -83,6 +83,7 @@ Resources :: struct {
 	},
 	fonts:      struct {
 		kiwisoda: ve.Font,
+		segment:  ve.Font,
 	},
 }
 
@@ -137,6 +138,18 @@ main :: proc() {
 			default_char = '?',
 		},
 		NEAREST_FILTER_SAMPLER,
+	)
+
+	R.fonts.segment = ve.load_font(
+		"assets/SevenSegment.ttf",
+		ve.Create_Font_Info {
+			size = 64,
+			padding = 2,
+			atlas_width = 2024,
+			atlas_height = 1024,
+			regions = {{start = 32, size = 128}},
+			default_char = '?',
+		},
 	)
 
 	load_pipelines()
@@ -240,6 +253,7 @@ main :: proc() {
 	G.scenes.game_scane.destroy(&G.scenes.game_scane)
 
 	ve.destroy_font(&R.fonts.kiwisoda)
+	ve.destroy_font(&R.fonts.segment)
 	destroy_render(&G.r)
 	destroy_models()
 
