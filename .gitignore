@@ -1,0 +1,6 @@
+_private
+
+bin
+*.exe
+*.pdb
+*.spv

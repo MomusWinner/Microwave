@@ -1,0 +1,7 @@
+package ld
+
+
+G_ACCELERATION :: 0.1
+
+GROUND_WIDTH :: 20
+GROUND_HEIGHT :: 100
