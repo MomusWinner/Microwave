@@ -4,7 +4,7 @@ import "core:log"
 import "lib:ve"
 
 DEPTH_SIZE :: 2048
-DOWNSCALE :: 3
+DOWNSCALE :: 1
 
 @(buffer)
 Postprocessing_UBO :: struct {
@@ -90,6 +90,7 @@ create_renderer :: proc() -> Renderer {
 		&screen_rt,
 		format = .RGBA_norm_u16,
 		sampler_info = NEAREST_FILTER_SAMPLER,
+		clear_value = BACKGROUND,
 	)
 	screen_brightness_texture := ve.render_target_add_color_attachment(
 		&screen_rt,
@@ -174,7 +175,7 @@ end_renderer :: proc(r: ^Renderer) {
 		ve.end_render_target(&r.screen_rt)
 	}
 
-	ve.begin_draw(BACKGROUND)
+	ve.begin_draw()
 	{
 		ve.set_camera(r.ui_camera)
 		ve.draw_mesh(R.primitives.square, R.pipelines.postprocessing, handles = ve.Handles{h0 = r.postproc_ubo})

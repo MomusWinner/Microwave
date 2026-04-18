@@ -1,9 +1,13 @@
 package ld
 
+import "core:encoding/json"
 import "core:fmt"
 import "core:log"
 import "core:math"
 import "core:mem"
+import "core:os"
+import "core:strconv"
+import "core:strings"
 import "core:time"
 import "lib:ve"
 import vemath "lib:ve/math"
@@ -11,8 +15,7 @@ import vemath "lib:ve/math"
 TARGET_FPS :: 120
 FIXED_DELTA_TIME :: 1.0 / TARGET_FPS
 
-// BACKGROUND := linerize_color({0.913, 0.964, 0.882})
-BACKGROUND := linerize_color(vec4{0.13, 0.13, 0.13, 1})
+BACKGROUND := linerize_color(vec4{0.53, 0.53, 0.53, 1})
 
 NEAREST_FILTER_SAMPLER :: ve.Sampler_Info {
 	mag_filter     = .Nearest,
@@ -45,6 +48,12 @@ Global :: struct {
 }
 
 Resources :: struct {
+	// settings
+	s:          struct {
+		// item_info by name
+		items: map[string]Item_Info,
+		pipe:  Pipe_Info,
+	},
 	pipelines:  struct {
 		base:           ve.Graphics_Pipeline,
 		depth_only:     ve.Graphics_Pipeline,
@@ -60,10 +69,15 @@ Resources :: struct {
 		bg: Sound,
 	},
 	models:     struct {
-		ground: Model,
-		enemy:  Model,
-		bullet: Model,
+		ground:                Model,
+		enemy:                 Model,
+		microwave:             Model,
+		microwave_door:        Model,
+		microwave_button:      Model,
+		microwave_thingamagic: Model,
+		items:                 map[string]Model,
 	},
+	stextures:  map[string]ve.Texture,
 	primitives: struct {
 		square: ve.Mesh,
 	},
@@ -125,15 +139,22 @@ main :: proc() {
 		NEAREST_FILTER_SAMPLER,
 	)
 
+	load_pipelines()
+	load_models()
+	load_game_settings()
+
+	G.r = create_renderer()
+
+	p_camera: ve.Camera
+	ve.init_camera(&p_camera)
+	init_player_controller(&G.player, {0, 1, 0}, p_camera)
+
 	G.scenes.menu_scane = create_menu_scene()
 	G.scenes.menu_scane.init(&G.scenes.menu_scane)
 	G.scenes.game_scane = create_game_scene()
 	G.scenes.game_scane.init(&G.scenes.game_scane)
 
 	G.scenes.current_scene = &G.scenes.menu_scane
-
-	load_pipelines()
-	load_models()
 
 	init_debug_drawer()
 	defer destroy_debug_drawer()
@@ -143,13 +164,6 @@ main :: proc() {
 
 	load_sounds()
 	defer destroy_sounds()
-
-	// ve.cursor_set_mode(.Captured)
-	G.r = create_renderer()
-
-	p_camera: ve.Camera
-	ve.init_camera(&p_camera)
-	init_player_controller(&G.player, {0, 1, 0}, p_camera)
 
 	G.ground = Bounding_Box {
 		center    = {0, -GROUND_HEIGHT / 2, 0},
@@ -171,14 +185,13 @@ main :: proc() {
 		}
 
 		G.r.lsource.camera.target = 0
-		speed: f32 = 0.4
-		radius: f32 = 5
-		G.r.lsource.camera.position = vec3 {
-			math.cos_f32(cast(f32)ve.time_get_total() * speed) * radius,
-			math.sin_f32(cast(f32)ve.time_get_total() * speed) * radius,
-			G.r.lsource.camera.position.z,
-		}
-
+		// speed: f32 = 0.4
+		// radius: f32 = 5
+		// G.r.lsource.camera.position = vec3 {
+		// 	math.cos_f32(cast(f32)ve.time_get_total() * speed) * radius,
+		// 	math.sin_f32(cast(f32)ve.time_get_total() * speed) * radius,main
+		// 	G.r.lsource.camera.position.z,
+		// }
 
 		@(static) started: bool
 		if !started {
@@ -241,6 +254,80 @@ destroy_sounds :: proc() {
 	destroy_sound(&R.sounds.bg)
 }
 
+load_game_settings :: proc() {
+	settings_path := "assets/game.json"
+	if !os.is_file(settings_path) {
+		log.panicf("Couldn't load game settings. Path \"%s\" is not exist", settings_path)
+	}
+
+	settings_data, ok := ve.read_file(settings_path, context.temp_allocator)
+	if !ok do log.panic("Couldn't read game settings")
+
+	j, err := json.parse(settings_data, allocator = context.temp_allocator)
+	if err != .None do log.panicf("Couldn't parse game settings: %v", err)
+	fields := j.(json.Object)
+	load_items(fields["objects"].(json.Array))
+	load_pipe(fields["pipe"].(json.Object))
+	log.info(R.s.items)
+}
+
+Item_Info :: struct {
+	name:          string,
+	model_path:    string,
+	box:           Bounding_Box,
+	origin_offset: vec3,
+}
+
+load_items :: proc(array: json.Array) {
+	for item_json in array {
+		item := item_json.(json.Object)
+		name := strings.clone(item["name"].(json.String))
+		model_path := strings.clone(item["model"].(json.String))
+		_, model_loaded := R.models.items[model_path]
+		if !model_loaded {
+			model := load_item_model(model_path)
+			R.models.items[model_path] = model
+		}
+
+		box_size := prase_vec3_from_string(item["box"].(json.String))
+		box := Bounding_Box {
+			half_size = box_size / 2,
+		}
+
+		origin_offset := prase_vec3_from_string(item["origin_offset"].(json.String))
+
+		R.s.items[name] = Item_Info {
+			name          = name,
+			model_path    = model_path,
+			box           = box,
+			origin_offset = origin_offset,
+		}
+	}
+}
+
+Pipe_Info :: struct {
+	items: [dynamic]Pipe_Item_Info,
+}
+
+Pipe_Item_Info :: struct {
+	name:    string,
+	percent: f32,
+}
+
+load_pipe :: proc(j: json.Object) {
+	items_json := j["objects"].(json.Array)
+	pipe_info := Pipe_Info{}
+
+	for item_json in items_json {
+		item := item_json.(json.Object)
+		name := strings.clone(item["name"].(json.String))
+		percent := cast(f32)item["percent"].(json.Float)
+		append(&pipe_info.items, Pipe_Item_Info{name = name, percent = percent})
+	}
+	R.s.pipe = pipe_info
+	log.info(R.s.pipe)
+}
+
 load_models :: proc() {
 	R.primitives.square = ve.create_primitive_square()
 
@@ -249,19 +336,24 @@ load_models :: proc() {
 	)
 	model_add_single_material(&R.models.ground, create_light_material(color = {0.4, 0.2, 0}))
 
-	R.models.bullet = create_model_from_mesh(ve.create_primitive_cube(0.1))
-	model_add_single_material(&R.models.bullet, create_light_source_material(color = {1, 1, 1}))
+	R.models.microwave = load_model("assets/models/microwave/microwave.obj")
+	R.models.microwave_door = load_model("assets/models/microwave/door.obj")
+	R.models.microwave_button = load_model("assets/models/microwave/button.obj")
+	R.models.microwave_thingamagic = load_model("assets/models/microwave/thingamagic.obj")
+	model_add_single_material(&R.models.microwave, create_light_material(color = {0.3, 0.3, 0.3}))
+	model_add_single_material(&R.models.microwave_door, create_light_material(color = {0.35, 0.3, 0.3}))
+	model_add_single_material(&R.models.microwave_button, create_light_material(color = {0.8, 0.2, 0.2}))
+	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
 
 	//Nightstand, Couch, LoveChan
 	texture := ve.load_texture("assets/models/Couch/texture.png", sampler_info = NEAREST_FILTER_SAMPLER)
-	R.models.enemy = load_model("assets/models/Couch")
+	R.models.enemy = load_model("assets/models/Couch/model.obj")
 	model_add_single_material(&R.models.enemy, create_light_material(texture))
 }
 
 destroy_models :: proc() {
 	ve.destroy_mesh(&R.primitives.square)
 
-	destroy_model(&R.models.bullet)
 	destroy_model(&R.models.enemy)
 	destroy_model(&R.models.ground)
 }

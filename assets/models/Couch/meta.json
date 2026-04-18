@@ -3,7 +3,7 @@
 	"materials" : [
 		{
 			"name": "light",
-			"texture" : "texture.png",
+			"texture" : "texture",
 	 		"color" : "1;1;1",
 		}
 	],

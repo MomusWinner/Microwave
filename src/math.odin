@@ -25,12 +25,6 @@ Ray_Collision :: struct {
 	normal:   vec3, // Surface normal of hit
 }
 
-// Bounding_Box :: struct {
-// 	min:    vec3, // Minimum vertex box-corner
-// 	max:    vec3, // Maximum vertex box-corner
-// 	center: vec3,
-// }
-
 Bounding_Box :: struct {
 	half_size: vec3,
 	center:    vec3,
@@ -198,68 +192,3 @@ bounding_box_check_collision_ex :: proc(box1, box2: Bounding_Box) -> (collision:
 
 	return collision, true
 }
-
-
-// bounding_box_check_collision_ex :: proc(box1, box2: Bounding_Box) -> (collision: Collision, hit: bool) {
-// 	// Check if boxes intersect
-// 	if !(box1.max.x >= box2.min.x &&
-// 		   box1.min.x <= box2.max.x &&
-// 		   box1.max.y >= box2.min.y &&
-// 		   box1.min.y <= box2.max.y &&
-// 		   box1.max.z >= box2.min.z &&
-// 		   box1.min.z <= box2.max.z) {
-// 		return collision, false
-// 	}
-//
-// 	// Calculate overlap depths on each axis
-// 	overlap_x := min(box1.max.x, box2.max.x) - max(box1.min.x, box2.min.x)
-// 	overlap_y := min(box1.max.y, box2.max.y) - max(box1.min.y, box2.min.y)
-// 	overlap_z := min(box1.max.z, box2.max.z) - max(box1.min.z, box2.min.z)
-//
-// 	// Find the axis with minimum overlap (penetration depth)
-// 	min_overlap := overlap_x
-// 	normal := vec3{1, 0, 0}
-//
-// 	if overlap_y < min_overlap {
-// 		min_overlap = overlap_y
-// 		normal = vec3{0, 1, 0}
-// 	}
-// 	if overlap_z < min_overlap {
-// 		min_overlap = overlap_z
-// 		normal = vec3{0, 0, 1}
-// 	}
-//
-// 	// Determine sign of the normal (which direction to push)
-// 	box1_center := (box1.min + box1.max) / 2
-// 	box2_center := (box2.min + box2.max) / 2
-//
-// 	if normal.x != 0 {
-// 		if box1_center.x > box2_center.x {
-// 			normal.x = 1
-// 		} else {
-// 			normal.x = -1
-// 		}
-// 	} else if normal.y != 0 {
-// 		if box1_center.y > box2_center.y {
-// 			normal.y = 1
-// 		} else {
-// 			normal.y = -1
-// 		}
-// 	} else if normal.z != 0 {
-// 		if box1_center.z > box2_center.z {
-// 			normal.z = 1
-// 		} else {
-// 			normal.z = -1
-// 		}
-// 	}
-//
-// 	// Calculate collision point (center of the overlap region)
-// 	collision.point = vec3 {
-// 		max(box1.min.x, box2.min.x) + overlap_x / 2,
-// 		max(box1.min.y, box2.min.y) + overlap_y / 2,
-// 		max(box1.min.z, box2.min.z) + overlap_z / 2,
-// 	}
-// 	collision.normal = normal
-//
-// 	return collision, true
-// }

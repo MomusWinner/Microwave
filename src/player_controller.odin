@@ -52,16 +52,19 @@ plaer_controller_update :: proc(p: ^Player_Controller) {
 	}
 
 	// rotation
-	m_delta := ve.mouse_get_delta()
-	p.pitch -= m_delta.y * ve.time_get_delta() * MOUSE_SENS
-	if p.pitch > 1 do p.pitch = 1
-	if p.pitch < -1 do p.pitch = -1
-	p.yaw += m_delta.x * ve.time_get_delta() * MOUSE_SENS
-	forward := vec3 { 	//
-		linalg.cos(p.yaw) * linalg.cos(p.pitch),
-		linalg.sin(p.pitch),
-		linalg.sin(p.yaw) * linalg.cos(p.pitch),
-	}
+	// m_delta := ve.mouse_get_delta()
+	// p.pitch -= m_delta.y * ve.time_get_delta() * MOUSE_SENS
+	// if p.pitch > 1 do p.pitch = 1
+	// if p.pitch < -1 do p.pitch = -1
+	// p.yaw += m_delta.x * ve.time_get_delta() * MOUSE_SENS
+	// forward := vec3 { 	//
+	// 	linalg.cos(p.yaw) * linalg.cos(p.pitch),
+	// 	linalg.sin(p.pitch),
+	// 	linalg.sin(p.yaw) * linalg.cos(p.pitch),
+	// }
+	// right := linalg.normalize(linalg.cross(forward, vec3{0, 1, 0}))
+
+	forward := vec3{0, 0, 1}
 	right := linalg.normalize(linalg.cross(forward, vec3{0, 1, 0}))
 
 	if ve.key_is_pressed(.Space) && on_ground {

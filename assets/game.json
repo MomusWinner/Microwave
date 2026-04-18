@@ -1,0 +1,26 @@
+{
+	"objects": [
+		{
+			"name" : "apple",
+			"model" : "assets/models/Nightstand",
+			"box" : "0.5;0.5;0.5",
+			"origin_offset" : "0.0;-0.25;0.0",
+		},
+	],
+	"pipe" :  {
+		"objects" : [
+			{"name": "apple", "percent": 1}
+		]
+	},
+	"combinations": [
+		{
+			"from":["apple"],
+			"to" : [
+				{
+					"object" : "red_apple",
+					"percent" : 1
+				}
+			]
+		}
+	]
+}
