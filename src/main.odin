@@ -16,7 +16,7 @@ import vemath "lib:ve/math"
 TARGET_FPS :: 120
 FIXED_DELTA_TIME :: 1.0 / TARGET_FPS
 
-BACKGROUND := linerize_color(vec4{0.53, 0.53, 0.53, 1})
+BACKGROUND := linerize_color(vec4{0.13, 0.23, 0.23, 1})
 
 NEAREST_FILTER_SAMPLER :: ve.Sampler_Info {
 	mag_filter     = .Nearest,
@@ -75,6 +75,8 @@ Resources :: struct {
 	models:     struct {
 		ground:                Model,
 		enemy:                 Model,
+		pipe:                  Model,
+		rope:                  Model,
 		microwave:             Model,
 		microwave_door:        Model,
 		microwave_button:      Model,
@@ -201,7 +203,7 @@ main :: proc() {
 			}
 		}
 
-		G.r.lsource.camera.target = 0
+		G.r.lsource.camera.target = {0, 0, 1}
 		// speed: f32 = 0.4
 		// radius: f32 = 5
 		// G.r.lsource.camera.position = vec3 {
@@ -430,6 +432,9 @@ load_models :: proc() {
 	model_add_single_material(&R.models.microwave_button, create_light_material(color = {0.8, 0.2, 0.2}))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
 
+	R.models.pipe = load_item_model("assets/models/pipe")
+	R.models.rope = load_item_model("assets/models/rope")
+
 	//Nightstand, Couch, LoveChan
 	texture := ve.load_texture("assets/models/Couch/texture.png", sampler_info = NEAREST_FILTER_SAMPLER)
 	R.models.enemy = load_model("assets/models/Couch/model.obj")
@@ -439,6 +444,8 @@ load_models :: proc() {
 destroy_models :: proc() {
 	ve.destroy_mesh(&R.primitives.square)
 
+	destroy_model(&R.models.pipe)
+	destroy_model(&R.models.rope)
 	destroy_model(&R.models.enemy)
 	destroy_model(&R.models.ground)
 }

@@ -15,6 +15,14 @@ TEST_CSV := svace.csv
 all: debug release
 
 .PHONY: debug
+debug-win:
+	@echo "Building debug examples ..."
+	@mkdir -p $(BIN_DIR)/debug
+
+	$(ODIN) build $(SRC_DIR) -target:windows_amd64 -out:$(DEBUG_BIN).exe ${ODIN_DEBUG_FLAGS}
+	@echo "Built: $(DEBUG_BIN)"
+
+.PHONY: debug
 debug:
 	@echo "Building debug examples ..."
 	@mkdir -p $(BIN_DIR)/debug

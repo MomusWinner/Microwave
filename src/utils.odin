@@ -44,7 +44,7 @@ get_screen_to_world_ray :: proc(pos: vec2, camera: ve.Camera, w, h: int) -> (ray
 
 	// Convert screen coordinates to NDC (Vulkan: Z = 0 to 1)
 	ndc_x := (2.0 * pos.x / cast(f32)w) - 1.0
-	ndc_y := 1.0 - (2.0 * pos.y / cast(f32)h) // Flip Y for Vulkan
+	ndc_y := (2.0 * pos.y / cast(f32)h) - 1.0
 
 	// Get projection and view matrices
 	proj := ve.camera_get_projection(camera, aspect)
@@ -69,14 +69,17 @@ get_screen_to_world_ray :: proc(pos: vec2, camera: ve.Camera, w, h: int) -> (ray
 	// Calculate direction
 	direction := glsl.normalize(far_world.xyz - near_world.xyz)
 
-	if (camera.type == .Perspective) {
-		ray.position = camera.position
-	} else {
-		log.panic("unimplemented")
+	ray.position = near_world.xyz
+	ray.direction = glsl.normalize(far_world.xyz - near_world.xyz)
+
+	if (camera.type == .Orthographic) {
+		ray.direction = ve.camera_get_forward(camera)
 	}
 
-	ray.direction = direction
-	ray.direction.y *= -1
+	// ray.direction = direction
+
+	// ray.direction.y *= -1
+	// log.info(ve.camera_get_up(camera))
 
 	return
 }

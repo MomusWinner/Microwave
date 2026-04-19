@@ -35,7 +35,7 @@ Angle_Value :: struct {
 	angle: f32,
 }
 
-THINGAMAGIC_ANGLES :: []Angle_Value{{0, 0}, {1, linalg.PI / 2}, {2, linalg.PI}}
+THINGAMAGIC_ANGLES :: [3]Angle_Value{{0, 0}, {1, linalg.PI / 2}, {2, linalg.PI}}
 
 items: map[Id]Item
 taked_item: Id = INVALID_ID
@@ -74,6 +74,13 @@ microwave: struct {
 	items:                [dynamic]Id,
 }
 
+pipe_pos: vec3 = {-3, 2.5, BASE_Z}
+rope_pos: vec3 = {-5, 4.5, BASE_Z}
+rope_box: Bounding_Box = {
+	center    = rope_pos + vec3{0, -1.4, 0},
+	half_size = {0.4, 0.7, 0.4},
+}
+
 game_scene_init :: proc(s: ^Scene) {
 	init_microwave()
 }
@@ -85,24 +92,17 @@ game_scene_update :: proc(s: ^Scene) {
 	mouse := ve.mouse_get_position()
 	ray = get_screen_to_world_ray(mouse, G.player.camera, ve.screen_get_width(), ve.screen_get_height())
 
-	rope := Bounding_Box {
-		center    = {-2, 2.5, BASE_Z},
-		half_size = {0.05, 2, 0.05},
-	}
 
-	draw_box(Bounding_Box{center = {-1, 2.5, BASE_Z}, half_size = {0.3, 1, 0.3}})
-	draw_box(rope)
-
-	draw_line(ray.position, ray.position + ray.direction)
-	draw_box(Bounding_Box{center = ray.position, half_size = 0.1})
+	// draw_line(ray.position, ray.position + ray.direction)
+	// draw_box(Bounding_Box{center = ray.position, half_size = 0.1})
 
 	update_items()
 	update_microwave()
 
 	if ve.mouse_button_is_pressed(.Left) {
-		collision := ray_get_collision_bounding_box(ray, rope)
+		collision := ray_get_collision_bounding_box(ray, rope_box)
 		if collision.hit {
-			create_random_pipe_item({-1, 2.5, BASE_Z})
+			create_random_pipe_item(pipe_pos)
 		} else {
 		}
 	}
@@ -160,6 +160,7 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if ve.key_is_down(.C) {
+		draw_box(rope_box)
 		draw_items_debug()
 	}
 }
@@ -169,7 +170,8 @@ game_scene_draw :: proc(s: ^Scene) {
 	ve.init_trf(&trf)
 	ve.trf_set_position(&trf, {0, -GROUND_HEIGHT / 2, 0})
 	renderer_draw_model(&G.r, R.models.ground, ve.trf_get_matrix(trf))
-
+	renderer_draw_model(&G.r, R.models.pipe, linalg.mat4Translate(pipe_pos))
+	renderer_draw_model(&G.r, R.models.rope, linalg.mat4Translate(rope_pos))
 	draw_microwave()
 
 	draw_items()
@@ -202,7 +204,7 @@ find_combination :: proc() -> (Combination_Info, bool) {
 
 init_microwave :: proc() {
 	microwave.pos = vec3{0, 0, BASE_Z + 1}
-	microwave.scale = 0.5
+	microwave.scale = 1
 	microwave.open_button = Bounding_Box {
 		half_size = microwave.scale * {0.2, 0.1, 0.1},
 		center    = microwave.pos + microwave.scale * {-1.439889, 0.43842125, -1.10038829},
@@ -392,6 +394,17 @@ update_microwave :: proc() {
 			point := collision.point
 			dir := linalg.normalize(point - microwave.thingamagic_pos)
 			angle := linalg.atan2(dir.y, dir.x)
+			angle = angle + 2.0 * math.PI * math.ceil_f32(-angle / (2.0 * math.PI))
+
+			half_angle := (THINGAMAGIC_ANGLES[0].angle + THINGAMAGIC_ANGLES[len(THINGAMAGIC_ANGLES) - 1].angle) / 2
+			half_angle += math.PI
+			if half_angle < angle || angle < THINGAMAGIC_ANGLES[0].angle {
+				angle = THINGAMAGIC_ANGLES[0].angle
+			}
+			if math.abs(angle) > THINGAMAGIC_ANGLES[len(THINGAMAGIC_ANGLES) - 1].angle {
+				angle = THINGAMAGIC_ANGLES[len(THINGAMAGIC_ANGLES) - 1].angle
+			}
+
 			nearest_value: int = 0
 			nearest_angle: f32 = max(f32)
 
@@ -483,7 +496,6 @@ create_item :: proc(name: string, pos: vec3) -> ^Item {
 }
 
 create_random_pipe_item :: proc(pos: vec3) -> ^Item {
-	// R.s.pipe.items
 	r := rand.float32()
 	percent: f32
 	item_info: Pipe_Item_Info

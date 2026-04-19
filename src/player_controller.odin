@@ -26,7 +26,7 @@ Player_Controller :: struct {
 }
 
 init_player_controller :: proc(p: ^Player_Controller, position: vec3, camera: ve.Camera) {
-	p.height = 1
+	p.height = 3
 	p.camera = camera
 	p.speed = 10
 	p.position = position
@@ -64,7 +64,8 @@ plaer_controller_update :: proc(p: ^Player_Controller) {
 	// }
 	// right := linalg.normalize(linalg.cross(forward, vec3{0, 1, 0}))
 
-	forward := vec3{0, 0, 1}
+	forward := linalg.normalize(vec3{0, -0.1, 1})
+	// forward := linalg.normalize(vec3{0, 0, 1})
 	right := linalg.normalize(linalg.cross(forward, vec3{0, 1, 0}))
 
 	if ve.key_is_pressed(.Space) && on_ground {
