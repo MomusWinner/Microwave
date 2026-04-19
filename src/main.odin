@@ -79,6 +79,7 @@ Resources :: struct {
 		rope:                  Model,
 		microwave:             Model,
 		microwave_door:        Model,
+		microwave_open_button: Model,
 		microwave_button:      Model,
 		microwave_thingamagic: Model,
 		items:                 map[string]Model,
@@ -426,10 +427,12 @@ load_models :: proc() {
 	R.models.microwave = load_model("assets/models/microwave/microwave.obj")
 	R.models.microwave_door = load_model("assets/models/microwave/door.obj")
 	R.models.microwave_button = load_model("assets/models/microwave/button.obj")
+	R.models.microwave_open_button = load_model("assets/models/microwave/open_button.obj")
 	R.models.microwave_thingamagic = load_model("assets/models/microwave/thingamagic.obj")
 	model_add_single_material(&R.models.microwave, create_light_material(color = {0.3, 0.3, 0.3}))
 	model_add_single_material(&R.models.microwave_door, create_light_material(color = {0.35, 0.3, 0.3}))
 	model_add_single_material(&R.models.microwave_button, create_light_material(color = {0.8, 0.2, 0.2}))
+	model_add_single_material(&R.models.microwave_open_button, create_light_material(color = {0.2, 0.3, 0.2}))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
 
 	R.models.pipe = load_item_model("assets/models/pipe")

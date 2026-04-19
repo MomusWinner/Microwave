@@ -43,35 +43,43 @@ taked_item: Id = INVALID_ID
 MICROWAVE_ITEM_CAPACITY :: 2
 
 microwave: struct {
-	pos:                  vec3,
-	scale:                vec3,
-	open_button:          Bounding_Box,
-	door_width:           f32,
-	spawn_pos:            vec3,
+	pos:                             vec3,
+	scale:                           vec3,
+	door_width:                      f32,
+	spawn_pos:                       vec3,
 	// main
-	is_working:           bool,
+	is_working:                      bool,
 	// door
-	close_door_box:       Bounding_Box,
-	door_rotation:        f32,
-	door_corner_box:      Bounding_Box,
-	is_open:              bool,
-	opening:              bool,
-	closing:              bool,
+	close_door_box:                  Bounding_Box,
+	door_rotation:                   f32,
+	door_corner_box:                 Bounding_Box,
+	is_open:                         bool,
+	opening:                         bool,
+	closing:                         bool,
 	// thingamagic
-	thingamagic_box:      Bounding_Box,
-	thingamagic_pos:      vec3,
-	thingamagic_value:    int, // from 0 to 2
-	thingamagic_angle:    f32,
-	rotating_thingamagic: bool,
+	thingamagic_box:                 Bounding_Box,
+	thingamagic_pos:                 vec3,
+	thingamagic_value:               int, // from 0 to 2
+	thingamagic_angle:               f32,
+	rotating_thingamagic:            bool,
 	// timer
-	timer_text:           Text,
-	timer_seconds:        f32,
+	timer_text:                      Text,
+	timer_seconds:                   f32,
+	//open_button
+	open_button:                     Bounding_Box,
+	start_open_button_anim:          bool,
+	start_open_button_anim_time:     f32,
+	start_open_button_anim_elapsed:  f32,
+	start_open_button_anim_pos:      vec3,
 	// start button
-	start_button_box:     Bounding_Box,
-	start_button_pos:     vec3,
+	start_button_box:                Bounding_Box,
+	start_start_button_anim:         bool,
+	start_start_button_anim_time:    f32,
+	start_start_button_anim_elapsed: f32,
+	start_start_button_anim_pos:     vec3,
 	// 0
-	drop_box:             Bounding_Box,
-	items:                [dynamic]Id,
+	drop_box:                        Bounding_Box,
+	items:                           [dynamic]Id,
 }
 
 pipe_pos: vec3 = {-3, 2.5, BASE_Z}
@@ -205,10 +213,7 @@ find_combination :: proc() -> (Combination_Info, bool) {
 init_microwave :: proc() {
 	microwave.pos = vec3{0, 0, BASE_Z + 1}
 	microwave.scale = 1
-	microwave.open_button = Bounding_Box {
-		half_size = microwave.scale * {0.2, 0.1, 0.1},
-		center    = microwave.pos + microwave.scale * {-1.439889, 0.43842125, -1.10038829},
-	}
+
 	microwave.close_door_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{2.153, 1.084, -3.194},
 		half_size = vec3{0.3, 1, 0.3} * microwave.scale,
@@ -230,11 +235,20 @@ init_microwave :: proc() {
 		0.004 * microwave.scale.x,
 	)
 
+	// Start button
 	microwave.start_button_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{-1.5658, 0.759148, -0.960555},
 		half_size = 0.1 * microwave.scale,
 	}
-	microwave.start_button_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
+	microwave.start_start_button_anim_time = 0.5
+
+	// Open button
+	microwave.open_button = Bounding_Box {
+		half_size = microwave.scale * {0.2, 0.1, 0.1},
+		center    = microwave.pos + microwave.scale * {-1.439889, 0.43842125, -1.10038829},
+	}
+	microwave.start_open_button_anim_time = 0.5
+	//
 
 	microwave.drop_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{0.47175516, 1.0606446, -1.898627},
@@ -275,6 +289,19 @@ update_microwave :: proc() {
 		collision := ray_get_collision_bounding_box(ray, microwave.open_button)
 		if collision.hit {
 			microwave.opening = true
+			microwave.start_open_button_anim = true
+		}
+	}
+
+	if microwave.start_open_button_anim {
+		microwave.start_open_button_anim_elapsed += ve.time_get_delta()
+		offset := math.sin(1 + (microwave.start_open_button_anim_elapsed / microwave.start_open_button_anim_time) * 2)
+		offset *= 0.1
+		microwave.start_open_button_anim_pos.z = offset
+		if microwave.start_open_button_anim_elapsed > microwave.start_open_button_anim_time {
+			microwave.start_open_button_anim = false
+			microwave.start_open_button_anim_elapsed = 0
+			microwave.start_open_button_anim_pos = 0
 		}
 	}
 
@@ -334,10 +361,27 @@ update_microwave :: proc() {
 		microwave.rotating_thingamagic = false
 	}
 
-	if ve.mouse_button_is_start_down(.Left) && !microwave.is_working && !microwave.opening && !microwave.closing {
+	if ve.mouse_button_is_start_down(.Left) &&
+	   len(microwave.items) != 0 &&
+	   !microwave.is_working &&
+	   !microwave.opening &&
+	   !microwave.closing {
 		collision := ray_get_collision_bounding_box(ray, microwave.start_button_box)
 		if collision.hit {
 			microwave.is_working = true
+			microwave.start_start_button_anim = true
+		}
+	}
+
+	if microwave.start_start_button_anim {
+		microwave.start_start_button_anim_elapsed += ve.time_get_delta()
+		offset := math.sin(1 + (microwave.start_start_button_anim_elapsed / microwave.start_start_button_anim_time) * 2)
+		offset *= 0.1
+		microwave.start_start_button_anim_pos.z = offset
+		if microwave.start_start_button_anim_elapsed > microwave.start_start_button_anim_time {
+			microwave.start_start_button_anim = false
+			microwave.start_start_button_anim_elapsed = 0
+			microwave.start_start_button_anim_pos = 0
 		}
 	}
 
@@ -476,9 +520,18 @@ draw_microwave :: proc() {
 		linalg.mat4Translate(microwave.timer_text.pos) * linalg.mat4Rotate({0, 1, 0}, math.PI),
 	)
 
+	renderer_draw_model(
+		&G.r,
+		R.models.microwave_button,
+		linalg.mat4Translate({0, 0, -0.1} + microwave.pos + microwave.start_start_button_anim_pos) *
+		linalg.mat4Scale(microwave.scale),
+	)
 
-	// renderer_draw_model(&G.r, R.models.microwave_thingamagic, linalg.mat4Translate({0, 1, 0}))
-	// renderer_draw_model(&G.r, R.models.microwave_door)
+	renderer_draw_model(
+		&G.r,
+		R.models.microwave_open_button,
+		linalg.mat4Translate(microwave.pos + microwave.start_open_button_anim_pos) * linalg.mat4Scale(microwave.scale),
+	)
 }
 
 create_item :: proc(name: string, pos: vec3) -> ^Item {
