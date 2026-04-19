@@ -4,6 +4,7 @@ import "core:encoding/json"
 import "core:fmt"
 import "core:log"
 import "core:math"
+import linalg "core:math/linalg/glsl"
 import "core:mem"
 import "core:os"
 import "core:strconv"
@@ -51,8 +52,11 @@ Resources :: struct {
 	// settings
 	s:          struct {
 		// item_info by name
-		items: map[string]Item_Info,
-		pipe:  Pipe_Info,
+		default_item: string,
+		items:        map[string]Item_Info,
+		combinations: [dynamic]Combination_Info,
+		pipe:         Pipe_Info,
+		timer_values: map[int]int,
 	},
 	pipelines:  struct {
 		base:           ve.Graphics_Pipeline,
@@ -282,6 +286,18 @@ load_game_settings :: proc() {
 	fields := j.(json.Object)
 	load_items(fields["objects"].(json.Array))
 	load_pipe(fields["pipe"].(json.Object))
+	load_combinations(fields["combinations"].(json.Array))
+
+	R.s.default_item = strings.clone(fields["default_object"].(json.String))
+
+	timer_values_json := fields["timer_values"].(json.Array)
+	if len(timer_values_json) != 3 {
+		log.panic("Incorrect game settings: timer_values should contains only 3 values")
+	}
+	for value, i in timer_values_json {
+		R.s.timer_values[i] = cast(int)value.(json.Float)
+	}
+
 	log.info(R.s.items)
 }
 
@@ -289,7 +305,10 @@ Item_Info :: struct {
 	name:          string,
 	model_path:    string,
 	box:           Bounding_Box,
+	scale:         vec3,
+	rotation:      vec3,
 	origin_offset: vec3,
+	trf:           mat4,
 }
 
 load_items :: proc(array: json.Array) {
@@ -308,14 +327,66 @@ load_items :: proc(array: json.Array) {
 			half_size = box_size / 2,
 		}
 
+		trf: ve.Transform
 		origin_offset := prase_vec3_from_string(item["origin_offset"].(json.String))
+		scale := prase_vec3_from_string(item["scale"].(json.String))
+		rotation := prase_vec3_from_string(item["rotation"].(json.String))
+		rotation = linalg.radians(rotation)
+
+		trf.position = origin_offset
+		trf.scale = scale
+		ve.trf_rotate(&trf, {1, 0, 0}, rotation.x)
+		ve.trf_rotate(&trf, {0, 1, 0}, rotation.y)
+		ve.trf_rotate(&trf, {0, 0, 1}, rotation.z)
 
 		R.s.items[name] = Item_Info {
 			name          = name,
 			model_path    = model_path,
 			box           = box,
+			scale         = scale,
+			rotation      = rotation,
 			origin_offset = origin_offset,
+			trf           = ve.trf_get_matrix(trf),
 		}
+	}
+}
+
+Combination_To_Info :: struct {
+	item:    string,
+	percent: f32,
+}
+
+Combination_Info :: struct {
+	from:        [dynamic]string,
+	timer_value: int,
+	to:          [dynamic]Combination_To_Info,
+}
+
+load_combinations :: proc(array: json.Array) {
+	for combination_json in array {
+		com := combination_json.(json.Object)
+		from_json := com["from"].(json.Array)
+		to_json := com["to"].(json.Array)
+		timer_value := cast(int)com["timer_value"].(json.Float)
+
+		from: [dynamic]string
+		for item_json in from_json {
+			append(&from, strings.clone(item_json.(json.String)))
+		}
+
+		to: [dynamic]Combination_To_Info
+		for com_to_json in to_json {
+			com_to := com_to_json.(json.Object)
+			append(
+				&to,
+				Combination_To_Info {
+					item = strings.clone(com_to["object"].(json.String)),
+					percent = cast(f32)com_to["percent"].(json.Float),
+				},
+			)
+		}
+
+		append(&R.s.combinations, Combination_Info{from = from, to = to, timer_value = timer_value})
 	}
 }
 

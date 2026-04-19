@@ -150,6 +150,19 @@ _get_blending_infos :: proc() -> ve.Blending_Infos {
 			color_write_mask = {.R, .G, .B, .A},
 		},
 	)
+
+	sm.append(
+		&bleding,
+		ve.Blending_Info {
+			src_color_blend_factor = .Src_Alpha,
+			dst_color_blend_factor = .One_Minus_Src_Alpha,
+			color_blend_op = .Add,
+			src_alpha_blend_factor = .One,
+			dst_alpha_blend_factor = .Zero,
+			alpha_blend_op = .Add,
+			color_write_mask = {.R, .G, .B, .A},
+		},
+	)
 	return bleding
 }
 

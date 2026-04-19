@@ -4,7 +4,7 @@ import "core:log"
 import "lib:ve"
 
 DEPTH_SIZE :: 2048
-DOWNSCALE :: 1
+DOWNSCALE :: 2
 
 @(buffer)
 Postprocessing_UBO :: struct {

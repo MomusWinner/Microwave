@@ -1,10 +1,12 @@
 package ld
 
+import "core:encoding/uuid"
 import "core:fmt"
 import "core:log"
 import "core:math"
 import linalg "core:math/linalg/glsl"
 import "core:math/rand"
+import "core:slice"
 import "core:strings"
 import "lib:ve"
 
@@ -17,13 +19,16 @@ create_game_scene :: proc() -> Scene {
 	}
 }
 
+INVALID_ID :: Id{}
+Id :: uuid.Identifier
+
 Item :: struct {
+	id:   Id,
 	name: string,
 	box:  Bounding_Box,
 }
 
 BASE_Z :: 4.0
-
 
 Angle_Value :: struct {
 	value: int,
@@ -32,17 +37,21 @@ Angle_Value :: struct {
 
 THINGAMAGIC_ANGLES :: []Angle_Value{{0, 0}, {1, linalg.PI / 2}, {2, linalg.PI}}
 
-items: [dynamic]Item
-taked_item: int = -1
+items: map[Id]Item
+taked_item: Id = INVALID_ID
+
+MICROWAVE_ITEM_CAPACITY :: 2
 
 microwave: struct {
 	pos:                  vec3,
 	scale:                vec3,
 	open_button:          Bounding_Box,
-	open_button_offset:   vec3,
 	door_width:           f32,
+	spawn_pos:            vec3,
+	// main
+	is_working:           bool,
 	// door
-	open_door_box:        Bounding_Box,
+	close_door_box:       Bounding_Box,
 	door_rotation:        f32,
 	door_corner_box:      Bounding_Box,
 	is_open:              bool,
@@ -56,10 +65,13 @@ microwave: struct {
 	rotating_thingamagic: bool,
 	// timer
 	timer_text:           Text,
+	timer_seconds:        f32,
 	// start button
 	start_button_box:     Bounding_Box,
 	start_button_pos:     vec3,
 	// 0
+	drop_box:             Bounding_Box,
+	items:                [dynamic]Id,
 }
 
 game_scene_init :: proc(s: ^Scene) {
@@ -82,7 +94,7 @@ game_scene_update :: proc(s: ^Scene) {
 	draw_box(rope)
 
 	draw_line(ray.position, ray.position + ray.direction)
-	draw_box(Bounding_Box{center = ray.position, half_size = 0.1}, color = {1, 0, 0})
+	draw_box(Bounding_Box{center = ray.position, half_size = 0.1})
 
 	update_items()
 	update_microwave()
@@ -96,28 +108,54 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if ve.mouse_button_is_start_down(.Left) {
-		for item, i in items {
+		for id, item in items {
 			collision := ray_get_collision_bounding_box(ray, item.box)
 			if collision.hit {
-				taked_item = i
+				if slice.contains(microwave.items[:], id) && !microwave.is_open {
+					taked_item = INVALID_ID
+					break
+				}
+				taked_item = id
 				break
 			}
-			taked_item = -1
 		}
 	}
 
 	if ve.mouse_button_is_start_up(.Left) {
-		taked_item = -1
+		taked_item = INVALID_ID
 	}
 
-	if taked_item != -1 {
+	if taked_item != INVALID_ID {
+		item := &items[taked_item]
 		box := Bounding_Box {
 			center    = {0, 0, BASE_Z},
 			half_size = {10000, 10000, 0.001},
 		}
 		collision := ray_get_collision_bounding_box(ray, box)
 		if collision.hit {
-			items[taked_item].box.center = collision.point
+			item.box.center = collision.point
+		}
+
+		drop_collision := ray_get_collision_bounding_box(ray, microwave.drop_box)
+		if microwave.is_open &&
+		   drop_collision.hit &&
+		   (len(microwave.items) < MICROWAVE_ITEM_CAPACITY || slice.contains(microwave.items[:], taked_item)) {
+			drop_box := Bounding_Box {
+				center    = microwave.pos,
+				half_size = {10, 10, 0.001},
+			}
+			drop_collision := ray_get_collision_bounding_box(ray, drop_box)
+			item.box.center = drop_collision.point
+			if !slice.contains(microwave.items[:], taked_item) && len(microwave.items) < MICROWAVE_ITEM_CAPACITY {
+				append(&microwave.items, taked_item)
+			}
+		} else {
+			for microwave_item, i in microwave.items {
+				if microwave_item == taked_item {
+					unordered_remove(&microwave.items, i)
+					break
+				}
+			}
 		}
 	}
 
@@ -135,22 +173,41 @@ game_scene_draw :: proc(s: ^Scene) {
 	draw_microwave()
 
 	draw_items()
-	// renderer_draw_model(&G.r, R.models.test)
-	// renderer_draw_model(&G.r, R.models.enemy)
-	// draw_bullets()
 }
 
 game_scene_destroy :: proc(s: ^Scene) {
+}
+
+find_combination :: proc() -> (Combination_Info, bool) {
+	log.info(R.s.combinations)
+	names := make([dynamic]string, len(microwave.items), context.temp_allocator)
+	for item_id, i in microwave.items {
+		item := items[item_id]
+		names[i] = item.name
+	}
+
+	for c in R.s.combinations {
+		if c.timer_value != microwave.thingamagic_value do continue
+		for c_name in c.from {
+			if !slice.contains(names[:], c_name) {
+				continue
+			}
+		}
+		if len(names) != len(c.from) do continue
+		return c, true
+	}
+
+	return {}, false
 }
 
 init_microwave :: proc() {
 	microwave.pos = vec3{0, 0, BASE_Z + 1}
 	microwave.scale = 0.5
 	microwave.open_button = Bounding_Box {
-		half_size = {0.1, 0.1, 0.01},
+		half_size = microwave.scale * {0.2, 0.1, 0.1},
+		center    = microwave.pos + microwave.scale * {-1.439889, 0.43842125, -1.10038829},
 	}
-	microwave.open_button_offset = {-1.423, 0.460, -1.222}
-	microwave.open_door_box = Bounding_Box {
+	microwave.close_door_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{2.153, 1.084, -3.194},
 		half_size = vec3{0.3, 1, 0.3} * microwave.scale,
 	}
@@ -161,12 +218,14 @@ init_microwave :: proc() {
 	}
 	microwave.thingamagic_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
 
+	microwave.spawn_pos = microwave.pos + 1 * microwave.scale
+
 	microwave.timer_text = create_text(
 		&R.fonts.segment,
-		"00:15",
+		"00:00",
 		microwave.pos + microwave.scale * vec3{-1.15, 1.629, -0.9999},
 		{1, 0, 0},
-		0.005 * microwave.scale.x,
+		0.004 * microwave.scale.x,
 	)
 
 	microwave.start_button_box = Bounding_Box {
@@ -175,10 +234,38 @@ init_microwave :: proc() {
 	}
 	microwave.start_button_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
 
+	microwave.drop_box = Bounding_Box {
+		center    = microwave.pos + microwave.scale * vec3{0.47175516, 1.0606446, -1.898627},
+		half_size = vec3{0.8, 0.5, 1.3} * microwave.scale,
+	}
+
 	lights := ubo_light_info_get_spot_lights(G.r.lsource.ubo)
 	lights[0].position = microwave.pos + {0, 1, 0} * microwave.scale
 	lights[0].color = {1, 1, 0.5}
+}
 
+set_timer_seconds :: proc(seconds: int) {
+	MAX_MINUTES :: 99
+	MAX_SECONDS :: 99
+	timer_string: string
+
+	if seconds > MAX_MINUTES * 60 + MAX_SECONDS {
+		timer_string = "99:99"
+		text_set_string(&microwave.timer_text, timer_string)
+		return
+	}
+
+	minutes := seconds / 60
+	remaining_seconds := seconds % 60
+
+	if minutes > MAX_MINUTES || remaining_seconds > MAX_SECONDS {
+		timer_string = "99:99"
+		text_set_string(&microwave.timer_text, timer_string)
+		return
+	}
+
+	timer_string = fmt.tprintf("%02d:%02d", minutes, remaining_seconds)
+	text_set_string(&microwave.timer_text, timer_string)
 }
 
 update_microwave :: proc() {
@@ -200,7 +287,7 @@ update_microwave :: proc() {
 
 	if ve.mouse_button_is_pressed(.Left) {
 		if microwave.is_open {
-			collision := ray_get_collision_bounding_box(ray, microwave.open_door_box)
+			collision := ray_get_collision_bounding_box(ray, microwave.close_door_box)
 			if collision.hit {
 				microwave.closing = true
 			}
@@ -217,24 +304,69 @@ update_microwave :: proc() {
 	}
 
 	if ve.key_is_down(.C) {
-		// update_vec3_from_keyboard(&microwave.open_door_box.center)
-		draw_box(microwave.open_door_box)
-		// update_vec3_from_keyboard(&microwave.thingamagic_box.center)
-		// log.info("BASE", microwave.thingamagic_box.center - microwave.pos)
+		draw_box(microwave.close_door_box)
 		draw_box(microwave.thingamagic_box)
-
-		microwave.open_button.center = microwave.pos + microwave.open_button_offset * microwave.scale
 		draw_box(microwave.open_button)
-
 		draw_box(microwave.start_button_box)
-		update_vec3_from_keyboard(&microwave.start_button_box.center)
-		log.info("BASE", microwave.start_button_box.center - microwave.pos)
+		draw_box(microwave.drop_box)
+		// update_vec3_from_keyboard(&microwave.drop_box.center)
+		// log.info("BASE", microwave.drop_box.center - microwave.pos)
 	}
 
 	if ve.mouse_button_is_start_down(.Left) {
 		collision := ray_get_collision_bounding_box(ray, microwave.thingamagic_box)
 		if collision.hit {
 			microwave.rotating_thingamagic = true
+		}
+	}
+
+	if ve.mouse_button_is_start_up(.Left) {
+		if microwave.rotating_thingamagic == true {
+			for v in THINGAMAGIC_ANGLES {
+				if v.value == microwave.thingamagic_value {
+					microwave.thingamagic_angle = v.angle
+					break
+				}
+			}
+		}
+		microwave.rotating_thingamagic = false
+	}
+
+	if ve.mouse_button_is_start_down(.Left) && !microwave.is_working && !microwave.opening && !microwave.closing {
+		collision := ray_get_collision_bounding_box(ray, microwave.start_button_box)
+		if collision.hit {
+			microwave.is_working = true
+		}
+	}
+
+	if microwave.is_working {
+		microwave.timer_seconds += ve.time_get_delta()
+		set_timer_seconds(cast(int)microwave.timer_seconds)
+		if microwave.timer_seconds > cast(f32)get_tiemr_seconds_by_current_thingamagic() {
+			// WORK IS DONE
+			microwave.is_working = false
+			microwave.timer_seconds = 0
+			set_timer_seconds(cast(int)get_tiemr_seconds_by_current_thingamagic())
+
+			c, ok := find_combination()
+			for id in microwave.items do remove_item(id)
+			clear(&microwave.items)
+
+			new_item_id: Id
+			if ok {
+				r := rand.float32()
+				percent: f32
+				for to in c.to {
+					percent += to.percent
+					if percent >= r {
+						new_item_id = create_item(to.item, microwave.spawn_pos).id
+						break
+					}
+				}
+			} else {
+				new_item_id = create_item(R.s.default_item, microwave.spawn_pos).id
+			}
+			append(&microwave.items, new_item_id)
 		}
 	}
 
@@ -270,11 +402,33 @@ update_microwave :: proc() {
 					nearest_value = v.value
 				}
 			}
-
-			microwave.thingamagic_value = nearest_value
+			update_thingmagic_value(nearest_value)
 			microwave.thingamagic_angle = angle
 		}
 	}
+
+	if ve.mouse_button_is_start_down(.Left) {
+		// collision := ray_get_collision_bounding_box(ray, microwave.start_button_box)
+		// if collision.hit {
+		//
+		// }
+	}
+}
+
+remove_item :: proc(id: Id) {
+	delete_key(&items, id)
+}
+
+get_tiemr_seconds_by_current_thingamagic :: proc() -> int {
+	return R.s.timer_values[microwave.thingamagic_value]
+}
+get_tiemr_seconds_by_thingamagic_value :: proc(value: int) -> int {
+	return R.s.timer_values[value]
+}
+
+update_thingmagic_value :: proc(value: int) {
+	microwave.thingamagic_value = value
+	set_timer_seconds(R.s.timer_values[microwave.thingamagic_value])
 }
 
 draw_microwave :: proc() {
@@ -320,11 +474,12 @@ create_item :: proc(name: string, pos: vec3) -> ^Item {
 	box.center = pos
 	assert(ok_item, fmt.tprintf("Unregistered name: %s", name))
 	item := Item {
+		id   = uuid.generate_v4(),
 		name = name,
 		box  = box,
 	}
-	append(&items, item)
-	return &items[len(items) - 1]
+	items[item.id] = item
+	return &items[item.id]
 }
 
 create_random_pipe_item :: proc(pos: vec3) -> ^Item {
@@ -349,7 +504,7 @@ create_random_pipe_item :: proc(pos: vec3) -> ^Item {
 }
 
 update_items :: proc() {
-	for &item in items {
+	for id, &item in items {
 		item_info := R.s.items[item.name]
 		half_size := item_info.box.half_size
 		item.box.center.y -= 1.7 * ve.time_get_delta()
@@ -361,7 +516,7 @@ update_items :: proc() {
 }
 
 draw_items_debug :: proc() {
-	for &item in items {
+	for _, &item in items {
 		item_info, ok_item := R.s.items[item.name]
 		assert(ok_item)
 		draw_box(item.box)
@@ -369,7 +524,7 @@ draw_items_debug :: proc() {
 }
 
 draw_items :: proc() {
-	for &item in items {
+	for _, &item in items {
 		draw_item(&item)
 	}
 }
@@ -379,8 +534,7 @@ draw_item :: proc(item: ^Item) {
 	assert(ok_item)
 	model, ok_model := R.models.items[item_info.model_path]
 	assert(ok_model)
-	renderer_draw_model(&G.r, model, linalg.mat4Translate(item.box.center + item_info.origin_offset))
-	// renderer_draw_model(&G.r, model, linalg.mat4Translate(item.box.center))
+	renderer_draw_model(&G.r, model, linalg.mat4Translate(item.box.center) * item_info.trf)
 }
 
 // Bullet :: struct {

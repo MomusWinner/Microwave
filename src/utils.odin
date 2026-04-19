@@ -213,7 +213,7 @@ linerize_color_vec4 :: proc "contextless" (color: vec4) -> vec4 {
 }
 
 prase_vec3_from_string :: proc(str: string, loc := #caller_location) -> vec3 {
-	split := strings.split(str, ";")
+	split := strings.split(str, ";", allocator = context.temp_allocator)
 	if len(split) != 3 {
 		log.panicf("Coudn't parse vec3 from string s%. vector should have only 3 component (0.0;0.0;0.0)", str, loc)
 	}
