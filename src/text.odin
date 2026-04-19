@@ -54,6 +54,11 @@ create_text :: proc(
 	}
 }
 
+destroy_text :: proc(t: ^Text) {
+	ve.destroy_mesh(&t.mesh)
+	ve.destroy_uniform_buffer(t.ubo)
+}
+
 text_set_position :: proc(text: ^Text, pos: vec3) {
 	text.pos = pos
 }

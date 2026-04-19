@@ -19,6 +19,10 @@ create_game_scene :: proc() -> Scene {
 	}
 }
 
+game_over :: proc() {
+	game_is_over = true
+}
+
 INVALID_ID :: Id{}
 Id :: uuid.Identifier
 
@@ -46,7 +50,8 @@ MICROWAVE_ITEM_CAPACITY :: 2
 
 kinematic_box: [dynamic]Bounding_Box
 
-microwave: struct {
+microwave: Microwave
+Microwave :: struct {
 	pos:                             vec3,
 	scale:                           vec3,
 	door_width:                      f32,
@@ -86,20 +91,54 @@ microwave: struct {
 	items:                           [dynamic]Id,
 }
 
-pipe_pos: vec3 = {-3, 2.5, BASE_Z}
+pipe_pos: vec3
 
 // ROPE
-start_rope_pos: vec3 = {-5, 4.5, BASE_Z}
-rope_pos: vec3 = start_rope_pos
+start_rope_pos: vec3
+rope_pos: vec3
 get_rope_box :: proc() -> Bounding_Box {
 	return Bounding_Box{center = rope_pos + vec3{0, -1.4, 0}, half_size = {0.4, 0.9, 0.4}}
 }
-rope_take_offset_y: f32 = 0
-rope_pull_distance: f32 = 0.9
-rope_pulled: bool = false
-rope_is_taked: bool = false
+rope_take_offset_y: f32
+rope_pull_distance: f32
+rope_pulled: bool
+rope_is_taked: bool
+
+// hp
+hp_pos: vec3
+hp_width: f32
+hp_max_size: f32
+hp_saturation: f32
+
+game_is_over: bool
+
+game_over_text: Text
 
 game_scene_init :: proc(s: ^Scene) {
+	game_over_text = create_text(&R.fonts.kiwisoda, "GAME OVER\nPress Enter to Restart", {0, 0.0, 0}, {1, 1, 1}, 0.01)
+	text_set_position(
+		&game_over_text,
+		game_over_text.pos - {game_over_text.width / 2, game_over_text.height / 2 + 0.3, 1},
+	)
+
+	pipe_pos = {-3, 2.5, BASE_Z}
+
+	// ROPE
+	start_rope_pos = {-5, 4.5, BASE_Z}
+	rope_pos = start_rope_pos
+	rope_take_offset_y = 0
+	rope_pull_distance = 0.9
+	rope_pulled = false
+	rope_is_taked = false
+
+	// hp
+	hp_pos = {2.913, 0.0, 6.744}
+	hp_width = 0.3
+	hp_max_size = 30
+	hp_saturation = 0.5
+
+	game_is_over = false
+
 	append(&kinematic_box, Bounding_Box{half_size = {100, 0.5, 100}, center = {0, -0.5, 0}})
 	init_microwave()
 }
@@ -110,6 +149,19 @@ last_taked_pos: vec3
 last_taked_velocity: vec3
 
 game_scene_update :: proc(s: ^Scene) {
+	if game_is_over {
+		if ve.key_is_pressed(.Enter) {
+			game_scene_reset()
+			game_scene_init(s)
+		}
+		return
+	}
+
+	hp_saturation -= R.s.speed_of_hanger * ve.time_get_delta()
+	if hp_saturation < 0 {
+		game_over()
+	}
+
 	plaer_controller_update(&G.player)
 	mouse := ve.mouse_get_position()
 	ray = get_screen_to_world_ray(mouse, G.player.camera, ve.screen_get_width(), ve.screen_get_height())
@@ -199,6 +251,10 @@ game_scene_update :: proc(s: ^Scene) {
 }
 
 game_scene_draw :: proc(s: ^Scene) {
+	if game_is_over {
+		draw_uitext(&game_over_text)
+	}
+
 	trf: ve.Transform
 	ve.init_trf(&trf)
 	ve.trf_set_position(&trf, {0, -GROUND_HEIGHT / 2, 0})
@@ -207,10 +263,27 @@ game_scene_draw :: proc(s: ^Scene) {
 	renderer_draw_model(&G.r, R.models.rope, linalg.mat4Translate(rope_pos))
 	draw_microwave()
 
+	renderer_draw_model(
+		&G.r,
+		R.models.hp,
+		linalg.mat4Translate(hp_pos) * linalg.mat4Scale({hp_width, hp_max_size * (hp_saturation / 1), hp_width}),
+	)
+
 	draw_items()
 }
 
+game_scene_reset :: proc() {
+	clear(&items)
+	clear(&kinematic_box)
+
+	destroy_text(&game_over_text)
+
+	delete(microwave.items)
+	microwave = Microwave{}
+}
+
 game_scene_destroy :: proc(s: ^Scene) {
+
 }
 
 update_rope :: proc() {
@@ -377,7 +450,7 @@ update_microwave :: proc() {
 	}
 
 	if microwave.opening {
-		microwave.door_rotation -= ve.time_get_delta()
+		microwave.door_rotation -= 3 * ve.time_get_delta()
 		if microwave.door_rotation < -linalg.PI / 2 {
 			microwave.door_rotation = -linalg.PI / 2
 			microwave.opening = false
@@ -395,7 +468,7 @@ update_microwave :: proc() {
 	}
 
 	if microwave.closing {
-		microwave.door_rotation += ve.time_get_delta()
+		microwave.door_rotation += 4 * ve.time_get_delta()
 		if microwave.door_rotation > 0 {
 			microwave.door_rotation = 0
 			microwave.closing = false
@@ -409,8 +482,6 @@ update_microwave :: proc() {
 		draw_box(microwave.open_button)
 		draw_box(microwave.start_button_box)
 		draw_box(microwave.drop_box)
-		// update_vec3_from_keyboard(&microwave.drop_box.center)
-		// log.info("BASE", microwave.drop_box.center - microwave.pos)
 	}
 
 	if ve.mouse_button_is_start_down(.Left) {

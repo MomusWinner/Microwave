@@ -52,11 +52,12 @@ Resources :: struct {
 	// settings
 	s:          struct {
 		// item_info by name
-		default_item: string,
-		items:        map[string]Item_Info,
-		combinations: [dynamic]Combination_Info,
-		pipe:         Pipe_Info,
-		timer_values: map[int]int,
+		default_item:    string,
+		items:           map[string]Item_Info,
+		speed_of_hanger: f32,
+		combinations:    [dynamic]Combination_Info,
+		pipe:            Pipe_Info,
+		timer_values:    map[int]int,
 	},
 	pipelines:  struct {
 		base:           ve.Graphics_Pipeline,
@@ -77,6 +78,7 @@ Resources :: struct {
 		enemy:                 Model,
 		pipe:                  Model,
 		rope:                  Model,
+		hp:                    Model,
 		microwave:             Model,
 		microwave_door:        Model,
 		microwave_open_button: Model,
@@ -253,6 +255,7 @@ main :: proc() {
 			time.accurate_sleep(target_delta_duration - frame_duration)
 		}
 		prev = time.now()
+		// log.info(1 / ve.time_get_delta())
 	}
 	ve.wait_render_completion()
 
@@ -292,6 +295,7 @@ load_game_settings :: proc() {
 	load_combinations(fields["combinations"].(json.Array))
 
 	R.s.default_item = strings.clone(fields["default_object"].(json.String))
+	R.s.speed_of_hanger = cast(f32)fields["speed_of_hanger"].(json.Float)
 
 	timer_values_json := fields["timer_values"].(json.Array)
 	if len(timer_values_json) != 3 {
@@ -306,6 +310,7 @@ load_game_settings :: proc() {
 
 Item_Info :: struct {
 	name:          string,
+	saturation:    f32,
 	model_path:    string,
 	box:           Bounding_Box,
 	scale:         vec3,
@@ -324,6 +329,8 @@ load_items :: proc(array: json.Array) {
 			model := load_item_model(model_path)
 			R.models.items[model_path] = model
 		}
+
+		saturation := cast(f32)item["saturation"].(json.Float)
 
 		box_size := prase_vec3_from_string(item["box"].(json.String))
 		box := Bounding_Box {
@@ -344,6 +351,7 @@ load_items :: proc(array: json.Array) {
 
 		R.s.items[name] = Item_Info {
 			name          = name,
+			saturation    = saturation,
 			model_path    = model_path,
 			box           = box,
 			scale         = scale,
@@ -435,6 +443,7 @@ load_models :: proc() {
 	model_add_single_material(&R.models.microwave_open_button, create_light_material(color = {0.2, 0.3, 0.2}))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
 
+	R.models.hp = load_item_model("assets/models/hp")
 	R.models.pipe = load_item_model("assets/models/pipe")
 	R.models.rope = load_item_model("assets/models/rope")
 
