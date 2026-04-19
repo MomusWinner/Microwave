@@ -347,21 +347,26 @@ update_rope :: proc() {
 }
 
 find_combination :: proc() -> (Combination_Info, bool) {
-	log.info(R.s.combinations)
 	names := make([dynamic]string, len(microwave.items), context.temp_allocator)
 	for item_id, i in microwave.items {
 		item := items[item_id]
 		names[i] = item.name
+		log.info("item_name", item.name)
 	}
 
 	for c in R.s.combinations {
 		if c.timer_value != microwave.thingamagic_value do continue
+		ok: bool = true
 		for c_name in c.from {
 			if !slice.contains(names[:], c_name) {
-				continue
+				ok = false
+				break
 			}
 		}
+		if !ok do continue
+
 		if len(names) != len(c.from) do continue
+		log.info("Combination", c)
 		return c, true
 	}
 
@@ -555,6 +560,7 @@ update_microwave :: proc() {
 			set_timer_seconds(cast(int)get_tiemr_seconds_by_current_thingamagic())
 
 			c, ok := find_combination()
+			if !ok do log.info("create_default")
 			for id in microwave.items do remove_item(id)
 			clear(&microwave.items)
 
