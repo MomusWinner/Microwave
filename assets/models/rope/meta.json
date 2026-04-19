@@ -1,0 +1,11 @@
+{
+	"model": "rope.obj"
+	"materials" : [
+		{
+			"name": "light",
+			"texture" : "",
+	 		"color" : "0.3;0.1;0",
+		}
+	],
+	"mesh_to_material" : []
+}
