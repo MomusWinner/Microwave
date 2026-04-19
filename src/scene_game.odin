@@ -562,13 +562,19 @@ update_microwave :: proc() {
 			microwave.timer_seconds = 0
 			set_timer_seconds(cast(int)get_tiemr_seconds_by_current_thingamagic())
 
-			c, ok := find_combination()
-			if !ok do log.info("create_default")
-			for id in microwave.items do remove_item(id)
+			c, find_comb := find_combination()
+
+			item_count := len(microwave.items)
+			remove_items := make([]Id, len(microwave.items), context.temp_allocator)
+			copy_slice(remove_items[:], microwave.items[:])
+			for id in remove_items do remove_item(id)
 			clear(&microwave.items)
 
 			new_item_id: Id
-			if ok {
+
+			if item_count < microwave.thingamagic_value + 1 {
+				new_item_id = create_item(R.s.coal_item, microwave.spawn_pos).id
+			} else if find_comb {
 				r := rand.float32()
 				percent: f32
 				for to in c.to {
@@ -581,6 +587,7 @@ update_microwave :: proc() {
 			} else {
 				new_item_id = create_item(R.s.default_item, microwave.spawn_pos).id
 			}
+
 			append(&microwave.items, new_item_id)
 		}
 	}
@@ -635,13 +642,15 @@ update_microwave :: proc() {
 }
 
 remove_item :: proc(id: Id) {
+	delete_key(&items, id)
+	log.info(microwave.items)
 	for m_id, i in microwave.items {
-		if id == m_id {
-			unordered_remove(&microwave.items, i)
+		if m_id == id {
+			log.info("remove", id)
+			ordered_remove(&microwave.items, i)
 			break
 		}
 	}
-	delete_key(&items, id)
 }
 
 get_tiemr_seconds_by_current_thingamagic :: proc() -> int {

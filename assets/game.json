@@ -1,5 +1,6 @@
 {
 	"default_object" : "gun"
+	"coal_object" : "coal",
 	"timer_values" : [1, 2, 3],
 	"speed_of_hanger" : 0.01,
 	"objects": [
@@ -27,6 +28,15 @@
 			"model" : "assets/models/Couch",
 			"box" : "0.5;0.5;0.5",
 			"scale" : "0.3;0.3;0.1",
+			"rotation" : "0;0;0",
+			"origin_offset" : "0.0;-0.25;0.0",
+		},
+		{
+			"name" : "coal",
+			"saturation" : -0.5,
+			"model" : "assets/models/Nightstand",
+			"box" : "0.3;0.8;0.3",
+			"scale" : "0.3;0.8;0.3",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
 		},

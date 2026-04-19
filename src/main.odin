@@ -52,6 +52,7 @@ Resources :: struct {
 	// settings
 	s:          struct {
 		// item_info by name
+		coal_item:       string,
 		default_item:    string,
 		items:           map[string]Item_Info,
 		speed_of_hanger: f32,
@@ -295,6 +296,7 @@ load_game_settings :: proc() {
 	load_combinations(fields["combinations"].(json.Array))
 
 	R.s.default_item = strings.clone(fields["default_object"].(json.String))
+	R.s.coal_item = strings.clone(fields["coal_object"].(json.String))
 	R.s.speed_of_hanger = cast(f32)fields["speed_of_hanger"].(json.Float)
 
 	timer_values_json := fields["timer_values"].(json.Array)
