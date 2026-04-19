@@ -23,9 +23,11 @@ INVALID_ID :: Id{}
 Id :: uuid.Identifier
 
 Item :: struct {
-	id:   Id,
-	name: string,
-	box:  Bounding_Box,
+	id:           Id,
+	name:         string,
+	box:          Bounding_Box,
+	acceleration: vec3,
+	velocity:     vec3,
 }
 
 BASE_Z :: 4.0
@@ -41,6 +43,8 @@ items: map[Id]Item
 taked_item: Id = INVALID_ID
 
 MICROWAVE_ITEM_CAPACITY :: 2
+
+kinematic_box: [dynamic]Bounding_Box
 
 microwave: struct {
 	pos:                             vec3,
@@ -90,10 +94,14 @@ rope_box: Bounding_Box = {
 }
 
 game_scene_init :: proc(s: ^Scene) {
+	append(&kinematic_box, Bounding_Box{half_size = {100, 0.5, 100}, center = {0, -0.5, 0}})
 	init_microwave()
 }
 
 ray: Ray
+
+last_taked_pos: vec3
+last_taked_velocity: vec3
 
 game_scene_update :: proc(s: ^Scene) {
 	plaer_controller_update(&G.player)
@@ -120,7 +128,6 @@ game_scene_update :: proc(s: ^Scene) {
 			collision := ray_get_collision_bounding_box(ray, item.box)
 			if collision.hit {
 				if slice.contains(microwave.items[:], id) && !microwave.is_open {
-					taked_item = INVALID_ID
 					break
 				}
 				taked_item = id
@@ -130,11 +137,26 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if ve.mouse_button_is_start_up(.Left) {
-		taked_item = INVALID_ID
+		if taked_item != INVALID_ID {
+			item := &items[taked_item]
+			item.velocity = last_taked_velocity * 0.3
+			taked_item = INVALID_ID
+		}
 	}
 
 	if taked_item != INVALID_ID {
 		item := &items[taked_item]
+
+		current_pos := item.box.center
+		dt := ve.time_get_delta()
+		if dt > 0 {
+			last_taked_velocity = (current_pos - last_taked_pos) / dt
+		}
+
+		last_taked_pos = current_pos
+
+		item.acceleration = 0
+		item.velocity = 0
 		box := Bounding_Box {
 			center    = {0, 0, BASE_Z},
 			half_size = {10000, 10000, 0.001},
@@ -154,6 +176,7 @@ game_scene_update :: proc(s: ^Scene) {
 			}
 			drop_collision := ray_get_collision_bounding_box(ray, drop_box)
 			item.box.center = drop_collision.point
+
 			if !slice.contains(microwave.items[:], taked_item) && len(microwave.items) < MICROWAVE_ITEM_CAPACITY {
 				append(&microwave.items, taked_item)
 			}
@@ -170,6 +193,11 @@ game_scene_update :: proc(s: ^Scene) {
 	if ve.key_is_down(.C) {
 		draw_box(rope_box)
 		draw_items_debug()
+		for k, i in kinematic_box {
+			if i == 0 do continue
+			log.info(k)
+			draw_box(k)
+		}
 	}
 }
 
@@ -211,8 +239,12 @@ find_combination :: proc() -> (Combination_Info, bool) {
 }
 
 init_microwave :: proc() {
-	microwave.pos = vec3{0, 0, BASE_Z + 1}
+	microwave.pos = vec3{0, 0, BASE_Z + 3}
 	microwave.scale = 1
+
+	append(&kinematic_box, Bounding_Box{center = microwave.pos - {1.7, 0, -0.3}, half_size = {1., 3, 1}})
+	append(&kinematic_box, Bounding_Box{center = microwave.pos + {2.5, 0, 0.1}, half_size = {1., 3, 1}})
+	append(&kinematic_box, Bounding_Box{center = microwave.pos - {0, 0.5, 0}, half_size = {4, 0.8, 1}})
 
 	microwave.close_door_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{2.153, 1.084, -3.194},
@@ -251,8 +283,8 @@ init_microwave :: proc() {
 	//
 
 	microwave.drop_box = Bounding_Box {
-		center    = microwave.pos + microwave.scale * vec3{0.47175516, 1.0606446, -1.898627},
-		half_size = vec3{0.8, 0.5, 1.3} * microwave.scale,
+		center    = microwave.pos + microwave.scale * vec3{0.37175516, 1.0606446, -1.898627},
+		half_size = vec3{0.85, 0.8, 1.3} * microwave.scale,
 	}
 
 	lights := ubo_light_info_get_spot_lights(G.r.lsource.ubo)
@@ -568,14 +600,158 @@ create_random_pipe_item :: proc(pos: vec3) -> ^Item {
 	return create_item(item_info.name, pos)
 }
 
+GRAVITY :: 9.8
+DAMPING :: 0.98
+
+COLLISION_ITERATIONS :: 2
+POSITION_CORRECTION_FACTOR :: 0.3
+
+RESTITUTION_ITEM_ITEM :: 0.1
+RESTITUTION_ITEM_KINEMATIC :: 0.2
+RESTITUTION_GROUND :: 1.5
+
+FRICTION :: 0.35
+
+VELOCITY_STOP_THRESHOLD :: 0.1
+
 update_items :: proc() {
+	dt := ve.time_get_delta()
+
 	for id, &item in items {
-		item_info := R.s.items[item.name]
-		half_size := item_info.box.half_size
-		item.box.center.y -= 1.7 * ve.time_get_delta()
-		y := item.box.center.y - item.box.half_size.y
-		if y < 0 {
-			item.box.center.y = item.box.half_size.y
+		item.acceleration.y = -GRAVITY
+		item.velocity += item.acceleration * dt
+
+		item.velocity.x *= DAMPING
+		item.velocity.z *= DAMPING
+
+		item.box.center += item.velocity * dt
+	}
+
+	for iteration in 0 ..< COLLISION_ITERATIONS {
+		for id1, &item1 in items {
+			for id2, &item2 in items {
+				if id1 == id2 do continue
+
+				if bounding_boxes_overlap(item1.box, item2.box) {
+					resolve_collision(&item1, &item2)
+				}
+			}
+		}
+
+		for id, &item in items {
+			for &kin_box in kinematic_box {
+				if bounding_boxes_overlap(item.box, kin_box) {
+					resolve_collision_with_kinematic(&item, kin_box)
+				}
+			}
+		}
+
+		for id, &item in items {
+			bottom_y := item.box.center.y - item.box.half_size.y
+			if bottom_y < 0 {
+				item.box.center.y = item.box.half_size.y
+				if item.velocity.y < 0 {
+					item.velocity.y = -item.velocity.y * RESTITUTION_GROUND
+					if abs(item.velocity.y) < VELOCITY_STOP_THRESHOLD {
+						item.velocity.y = 0
+					}
+				}
+			}
+		}
+	}
+}
+
+bounding_boxes_overlap :: proc(box1, box2: Bounding_Box) -> bool {
+	delta := box1.center - box2.center
+	total_half_size := box1.half_size + box2.half_size
+	return abs(delta.x) < total_half_size.x && abs(delta.y) < total_half_size.y && abs(delta.z) < total_half_size.z
+}
+
+resolve_collision :: proc(item1, item2: ^Item) {
+	delta := item1.box.center - item2.box.center
+	total_half_size := item1.box.half_size + item2.box.half_size
+
+	overlap := total_half_size - linalg.abs(delta)
+
+	min_overlap := overlap.x
+	axis := vec3{1, 0, 0}
+
+	if overlap.y < min_overlap {
+		min_overlap = overlap.y
+		axis = vec3{0, 1, 0}
+	}
+	if overlap.z < min_overlap {
+		min_overlap = overlap.z
+		axis = vec3{0, 0, 1}
+	}
+
+	dir := vec3{linalg.sign(delta.x), linalg.sign(delta.y), linalg.sign(delta.z)}
+	if delta.x == 0 do dir.x = 0
+	if delta.y == 0 do dir.y = 0
+	if delta.z == 0 do dir.z = 0
+
+	correction := axis * min_overlap * dir
+	item1.box.center += correction * POSITION_CORRECTION_FACTOR
+	item2.box.center -= correction * POSITION_CORRECTION_FACTOR
+
+	relative_velocity := item1.velocity - item2.velocity
+	velocity_along_axis := linalg.dot(relative_velocity, axis)
+
+	if velocity_along_axis < 0 {
+		impulse := (1 + RESTITUTION_ITEM_ITEM) * velocity_along_axis * 0.3 // Уменьшил импульс
+		item1.velocity -= axis * impulse
+		item2.velocity += axis * impulse
+
+		if axis.y == 0 {
+			item1.velocity.x *= FRICTION
+			item1.velocity.z *= FRICTION
+			item2.velocity.x *= FRICTION
+			item2.velocity.z *= FRICTION
+		}
+	}
+
+	if abs(velocity_along_axis) < 0.01 && min_overlap > 0.01 {
+		return
+	}
+}
+
+resolve_collision_with_kinematic :: proc(item: ^Item, kin_box: Bounding_Box) {
+	delta := item.box.center - kin_box.center
+	total_half_size := item.box.half_size + kin_box.half_size
+
+	overlap := total_half_size - linalg.abs(delta)
+
+	min_overlap := overlap.x
+	axis := vec3{1, 0, 0}
+
+	if overlap.y < min_overlap {
+		min_overlap = overlap.y
+		axis = vec3{0, 1, 0}
+	}
+	if overlap.z < min_overlap {
+		min_overlap = overlap.z
+		axis = vec3{0, 0, 1}
+	}
+
+	dir := vec3{linalg.sign(delta.x), linalg.sign(delta.y), linalg.sign(delta.z)}
+	if delta.x == 0 do dir.x = 0
+	if delta.y == 0 do dir.y = 0
+	if delta.z == 0 do dir.z = 0
+
+	correction := axis * min_overlap * dir
+	item.box.center += correction
+
+	velocity_along_axis := linalg.dot(item.velocity, axis)
+	if velocity_along_axis < 0 {
+		item.velocity -= axis * (1 + RESTITUTION_ITEM_KINEMATIC) * velocity_along_axis * 0.5
+
+		if axis.y == 0 {
+			item.velocity.x *= FRICTION
+			item.velocity.z *= FRICTION
+		}
+
+		if abs(item.velocity.y) < VELOCITY_STOP_THRESHOLD {
+			item.velocity.y = 0
 		}
 	}
 }

@@ -8,7 +8,6 @@ import vemath "lib:ve/math"
 MOUSE_SENS: f32 = 0.05
 
 // DAMPING :: 0.98
-DAMPING :: 0.90
 
 Player_Controller :: struct {
 	camera:       ve.Camera,
