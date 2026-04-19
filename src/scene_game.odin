@@ -114,6 +114,8 @@ game_is_over: bool
 
 game_over_text: Text
 
+eating: bool
+
 game_scene_init :: proc(s: ^Scene) {
 	game_over_text = create_text(&R.fonts.kiwisoda, "GAME OVER\nPress Enter to Restart", {0, 0.0, 0}, {1, 1, 1}, 0.01)
 	text_set_position(
@@ -122,6 +124,7 @@ game_scene_init :: proc(s: ^Scene) {
 	)
 
 	pipe_pos = {-3, 2.5, BASE_Z}
+	eating = false
 
 	// ROPE
 	start_rope_pos = {-5, 4.5, BASE_Z}
@@ -160,6 +163,21 @@ game_scene_update :: proc(s: ^Scene) {
 	hp_saturation -= R.s.speed_of_hanger * ve.time_get_delta()
 	if hp_saturation < 0 {
 		game_over()
+	}
+
+	if ve.key_is_pressed(.E) {
+		if taked_item != INVALID_ID {
+			eating = true
+		}
+	}
+
+	if eating {
+		item := items[taked_item]
+		item_info := R.s.items[item.name]
+		remove_item(taked_item)
+		hp_saturation += item_info.saturation
+		taked_item = INVALID_ID
+		eating = false
 	}
 
 	plaer_controller_update(&G.player)

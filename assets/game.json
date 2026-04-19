@@ -1,7 +1,7 @@
 {
 	"default_object" : "gun"
 	"timer_values" : [1, 2, 3],
-	"speed_of_hanger" : 0.05,
+	"speed_of_hanger" : 0.01,
 	"objects": [
 		{
 			"name" : "gun",
