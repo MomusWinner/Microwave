@@ -87,11 +87,17 @@ microwave: struct {
 }
 
 pipe_pos: vec3 = {-3, 2.5, BASE_Z}
-rope_pos: vec3 = {-5, 4.5, BASE_Z}
-rope_box: Bounding_Box = {
-	center    = rope_pos + vec3{0, -1.4, 0},
-	half_size = {0.4, 0.7, 0.4},
+
+// ROPE
+start_rope_pos: vec3 = {-5, 4.5, BASE_Z}
+rope_pos: vec3 = start_rope_pos
+get_rope_box :: proc() -> Bounding_Box {
+	return Bounding_Box{center = rope_pos + vec3{0, -1.4, 0}, half_size = {0.4, 0.9, 0.4}}
 }
+rope_take_offset_y: f32 = 0
+rope_pull_distance: f32 = 0.9
+rope_pulled: bool = false
+rope_is_taked: bool = false
 
 game_scene_init :: proc(s: ^Scene) {
 	append(&kinematic_box, Bounding_Box{half_size = {100, 0.5, 100}, center = {0, -0.5, 0}})
@@ -107,21 +113,12 @@ game_scene_update :: proc(s: ^Scene) {
 	plaer_controller_update(&G.player)
 	mouse := ve.mouse_get_position()
 	ray = get_screen_to_world_ray(mouse, G.player.camera, ve.screen_get_width(), ve.screen_get_height())
-
-
 	// draw_line(ray.position, ray.position + ray.direction)
 	// draw_box(Bounding_Box{center = ray.position, half_size = 0.1})
 
 	update_items()
 	update_microwave()
-
-	if ve.mouse_button_is_pressed(.Left) {
-		collision := ray_get_collision_bounding_box(ray, rope_box)
-		if collision.hit {
-			create_random_pipe_item(pipe_pos)
-		} else {
-		}
-	}
+	update_rope()
 
 	if ve.mouse_button_is_start_down(.Left) {
 		for id, item in items {
@@ -191,7 +188,7 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if ve.key_is_down(.C) {
-		draw_box(rope_box)
+		draw_box(get_rope_box())
 		draw_items_debug()
 		for k, i in kinematic_box {
 			if i == 0 do continue
@@ -214,6 +211,48 @@ game_scene_draw :: proc(s: ^Scene) {
 }
 
 game_scene_destroy :: proc(s: ^Scene) {
+}
+
+update_rope :: proc() {
+	if ve.mouse_button_is_start_down(.Left) {
+		collision := ray_get_collision_bounding_box(ray, get_rope_box())
+		if collision.hit {
+			rope_take_offset_y = rope_pos.y - collision.point.y
+			rope_is_taked = true
+		} else {
+			rope_is_taked = false
+		}
+	}
+
+	if ve.mouse_button_is_start_up(.Left) {
+		rope_is_taked = false
+	}
+
+	if rope_is_taked {
+		collision := ray_get_collision_bounding_box(
+			ray,
+			Bounding_Box{center = get_rope_box().center, half_size = {100, 100, 0.001}},
+		)
+
+		rope_pos.y = collision.point.y + rope_take_offset_y
+		if rope_pos.y > start_rope_pos.y {
+			rope_pos.y = start_rope_pos.y
+		}
+
+		if math.abs(rope_pos.y - start_rope_pos.y) >= rope_pull_distance {
+			rope_pos.y = start_rope_pos.y - rope_pull_distance - 0.0001
+			if !rope_pulled {
+				create_random_pipe_item(pipe_pos)
+			}
+			rope_pulled = true
+		} else {
+			rope_pulled = false
+		}
+	} else if math.abs(rope_pos.y - start_rope_pos.y) > 0.02 {
+		rope_pulled = false
+		dir := linalg.normalize(start_rope_pos.y - rope_pos.y)
+		rope_pos.y += dir * 1 * ve.time_get_delta()
+	}
 }
 
 find_combination :: proc() -> (Combination_Info, bool) {
