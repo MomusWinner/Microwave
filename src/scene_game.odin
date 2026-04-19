@@ -386,13 +386,7 @@ init_microwave :: proc() {
 		half_size = vec3{0.3, 1, 0.3} * microwave.scale,
 	}
 
-	microwave.thingamagic_box = Bounding_Box {
-		center    = microwave.pos + microwave.scale * vec3{-1.427, 1.274, -0.845},
-		half_size = vec3{0.3, 0.3, 0.3} * microwave.scale,
-	}
-	microwave.thingamagic_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
-
-	microwave.spawn_pos = microwave.pos + 1 * microwave.scale
+	microwave.spawn_pos = microwave.pos + {0, 0.7, 0} * microwave.scale
 
 	microwave.timer_text = create_text(
 		&R.fonts.segment,
@@ -401,6 +395,15 @@ init_microwave :: proc() {
 		{1, 0, 0},
 		0.004 * microwave.scale.x,
 	)
+
+	// Thingamagic
+	microwave.thingamagic_box = Bounding_Box {
+		center    = microwave.pos + microwave.scale * vec3{-1.427, 1.274, -0.845},
+		half_size = vec3{0.3, 0.3, 0.3} * microwave.scale,
+	}
+	microwave.thingamagic_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
+	update_thingmagic_value(0)
+
 
 	// Start button
 	microwave.start_button_box = Bounding_Box {
@@ -629,16 +632,15 @@ update_microwave :: proc() {
 			microwave.thingamagic_angle = angle
 		}
 	}
-
-	if ve.mouse_button_is_start_down(.Left) {
-		// collision := ray_get_collision_bounding_box(ray, microwave.start_button_box)
-		// if collision.hit {
-		//
-		// }
-	}
 }
 
 remove_item :: proc(id: Id) {
+	for m_id, i in microwave.items {
+		if id == m_id {
+			unordered_remove(&microwave.items, i)
+			break
+		}
+	}
 	delete_key(&items, id)
 }
 
