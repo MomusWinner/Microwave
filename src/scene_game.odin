@@ -286,6 +286,7 @@ game_scene_update :: proc(s: ^Scene) {
 		dt := ve.time_get_delta()
 		if dt > 0 {
 			last_taked_velocity = (current_pos - last_taked_pos) / dt
+			last_taked_velocity.z = 0
 		}
 
 		last_taked_pos = current_pos
