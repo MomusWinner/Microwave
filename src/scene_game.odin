@@ -233,7 +233,7 @@ game_scene_update :: proc(s: ^Scene) {
 
 	update_task_board()
 
-	if ve.key_is_pressed(.E) {
+	if ve.key_is_pressed(.E) || ve.mouse_button_is_pressed(.Right) {
 		if taked_item != INVALID_ID {
 			eating = true
 			play_item_eat_sound(taked_item)
