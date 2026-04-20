@@ -678,8 +678,8 @@ init_microwave :: proc() {
 		half_size = vec3{0.3, 0.3, 0.3} * microwave.scale,
 	}
 	microwave.thingamagic_pos = microwave.pos + microwave.scale * {-1.4271961, 1.1810113, -1.1490066}
+	update_thingmagic_value(1)
 	update_thingmagic_value(0)
-
 
 	// Start button
 	microwave.start_button_box = Bounding_Box {
@@ -818,6 +818,7 @@ update_microwave :: proc() {
 			microwave.is_working = true
 			microwave.start_start_button_anim = true
 			sound_restart(&R.sounds.microwave_start)
+			microwave.timer_seconds = cast(f32)get_tiemr_seconds_by_current_thingamagic()
 		}
 	}
 
@@ -834,9 +835,9 @@ update_microwave :: proc() {
 	}
 
 	if microwave.is_working {
-		microwave.timer_seconds += ve.time_get_delta()
+		microwave.timer_seconds -= ve.time_get_delta()
 		set_timer_seconds(cast(int)microwave.timer_seconds)
-		if microwave.timer_seconds > cast(f32)get_tiemr_seconds_by_current_thingamagic() {
+		if microwave.timer_seconds <= 0.1 {
 			// WORK IS DONE
 
 			sound_stop(&R.sounds.microwave_start)
@@ -888,7 +889,7 @@ update_microwave :: proc() {
 		microwave.rotating_thingamagic = false
 	}
 
-	if microwave.rotating_thingamagic {
+	if microwave.rotating_thingamagic && !microwave.is_working {
 		box := Bounding_Box {
 			center    = microwave.thingamagic_pos,
 			half_size = {1000, 1000, 0.001},
