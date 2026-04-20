@@ -1,0 +1,11 @@
+{
+	"model": "tutorial.obj"
+	"materials" : [
+		{
+			"name": "light",
+			"texture" : "tutorial.png",
+			"color" : "1;1;1",
+		}
+	],
+	"mesh_to_material" : []
+}

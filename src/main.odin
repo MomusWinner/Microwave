@@ -90,6 +90,7 @@ Resources :: struct {
 		pipe:                     Model,
 		rope:                     Model,
 		hp:                       Model,
+		tutorial:                 Model,
 		card:                     []ve.Mesh,
 		intestines:               Model,
 		task_board:               Model,
@@ -212,9 +213,6 @@ main :: proc() {
 		free_all(context.temp_allocator)
 
 		// -- Begin Update ----------------------------------------
-		if (ve.key_is_pressed(.Escape)) {
-			break
-		}
 		when ODIN_DEBUG {
 			if (ve.key_is_pressed(.R)) {
 				ve.hot_reload_shaders()
@@ -479,6 +477,9 @@ load_models :: proc() {
 		ve.create_primitive_cube({GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_WIDTH / 2}),
 	)
 	model_add_single_material(&R.models.ground, create_light_material(color = {0.18, 0.13, 0.117}))
+
+	// tutorial
+	R.models.tutorial = load_item_model("assets/models/tutorial/")
 
 	// Task Board
 	R.models.card = ve.load_meshes("assets/models/card/card.obj")
