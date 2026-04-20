@@ -980,6 +980,11 @@ draw_microwave :: proc() {
 		R.models.microwave_open_button,
 		linalg.mat4Translate(microwave.pos + microwave.start_open_button_anim_pos) * linalg.mat4Scale(microwave.scale),
 	)
+	renderer_draw_model(
+		&G.r,
+		R.models.microwave_button_holders,
+		linalg.mat4Translate(microwave.pos) * linalg.mat4Scale(microwave.scale),
+	)
 }
 
 create_item :: proc(name: string, pos: vec3) -> ^Item {

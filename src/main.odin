@@ -82,19 +82,20 @@ Resources :: struct {
 		microwave_switch: Sound,
 	},
 	models:     struct {
-		ground:                Model,
-		enemy:                 Model,
-		pipe:                  Model,
-		rope:                  Model,
-		hp:                    Model,
-		card:                  []ve.Mesh,
-		task_board:            Model,
-		microwave:             Model,
-		microwave_door:        Model,
-		microwave_open_button: Model,
-		microwave_button:      Model,
-		microwave_thingamagic: Model,
-		items:                 map[string]Model,
+		ground:                   Model,
+		enemy:                    Model,
+		pipe:                     Model,
+		rope:                     Model,
+		hp:                       Model,
+		card:                     []ve.Mesh,
+		task_board:               Model,
+		microwave:                Model,
+		microwave_door:           Model,
+		microwave_open_button:    Model,
+		microwave_button:         Model,
+		microwave_thingamagic:    Model,
+		microwave_button_holders: Model,
+		items:                    map[string]Model,
 	},
 	stextures:  map[string]ve.Texture,
 	primitives: struct {
@@ -483,16 +484,14 @@ load_models :: proc() {
 	R.models.microwave_door = load_model("assets/models/microwave/door.obj")
 	R.models.microwave_button = load_model("assets/models/microwave/button.obj")
 	R.models.microwave_open_button = load_model("assets/models/microwave/open_button.obj")
+	R.models.microwave_button_holders = load_model("assets/models/microwave/button_holders.obj")
 	R.models.microwave_thingamagic = load_model("assets/models/microwave/thingamagic.obj")
 	model_add_single_material(&R.models.microwave, create_light_material(microwave_texture))
-	model_add_single_material(&R.models.microwave_door, create_light_material(color = {0.3, 0.3, 0.3}))
-	model_add_single_material(&R.models.microwave_button, create_light_material(color = {0.8, 0.2, 0.2}))
-	model_add_single_material(&R.models.microwave_open_button, create_light_material(color = {0.2, 0.3, 0.2}))
-	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
-	// model_add_single_material(&r.models.microwave_door, create_light_material(microwave_door_texture))
-	// model_add_single_material(&r.models.microwave_button, create_light_material(microwave_button_texture))
-	// model_add_single_material(&r.models.microwave_open_button, create_light_material(microwave_button_texture))
-	// model_add_single_material(&r.models.microwave_thingamagic, create_light_material(microwave_button_texture))
+	model_add_single_material(&R.models.microwave_door, create_light_material(microwave_door_texture))
+	model_add_single_material(&R.models.microwave_button, create_light_material(microwave_button_texture))
+	model_add_single_material(&R.models.microwave_open_button, create_light_material(microwave_button_texture))
+	model_add_single_material(&R.models.microwave_button_holders, create_light_material(microwave_button_texture))
+	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(microwave_button_texture))
 
 	R.models.hp = load_item_model("assets/models/hp")
 	R.models.pipe = load_item_model("assets/models/pipe")
