@@ -212,6 +212,9 @@ eat_item :: proc(id: Id) {
 	item_info := R.s.items[item.name]
 	remove_item(taked_item)
 	hp_saturation += item_info.saturation
+	if hp_saturation > 1 {
+		hp_saturation = 1
+	}
 	complete_card(item.name)
 }
 
@@ -481,7 +484,7 @@ create_card :: proc(item: Item_Info) -> Card {
 init_task_board :: proc() {
 	task_board.start_pos_offset = {0, -1, 4}
 	task_board.end_pos_offset = {0, -5, 1}
-	task_board.pos = task_board_get_end_pos()
+	task_board.pos = {0, -100, 0}
 	task_board.rotation = linalg.mat4Rotate(vec3{1, 0, 0}, linalg.PI / 9.0)
 	task_board.scale = 1.4
 	task_board.is_open = false
