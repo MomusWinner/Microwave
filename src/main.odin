@@ -16,7 +16,7 @@ import vemath "lib:ve/math"
 TARGET_FPS :: 120
 FIXED_DELTA_TIME :: 1.0 / TARGET_FPS
 
-BACKGROUND := linerize_color(vec4{0.13, 0.23, 0.23, 1})
+BACKGROUND := linerize_color(vec4{0.13, 0.13, 0.15, 1})
 
 NEAREST_FILTER_SAMPLER :: ve.Sampler_Info {
 	mag_filter     = .Nearest,
@@ -72,7 +72,14 @@ Resources :: struct {
 		light_source:   ve.Graphics_Pipeline,
 	},
 	sounds:     struct {
-		bg: Sound,
+		bg:               Sound,
+		item_sounds:      map[string]Sound,
+		microwave_beep:   Sound,
+		microwave_close:  Sound,
+		microwave_finish: Sound,
+		microwave_open:   Sound,
+		microwave_start:  Sound,
+		microwave_switch: Sound,
 	},
 	models:     struct {
 		ground:                Model,
@@ -162,6 +169,15 @@ main :: proc() {
 		},
 	)
 
+	init_debug_drawer()
+	defer destroy_debug_drawer()
+
+	init_music()
+	defer destroy_music()
+
+	load_sounds()
+	defer destroy_sounds()
+
 	load_pipelines()
 	load_models()
 	load_game_settings()
@@ -178,15 +194,6 @@ main :: proc() {
 	G.scenes.game_scane.init(&G.scenes.game_scane)
 
 	G.scenes.current_scene = &G.scenes.menu_scane
-
-	init_debug_drawer()
-	defer destroy_debug_drawer()
-
-	init_music()
-	defer destroy_music()
-
-	load_sounds()
-	defer destroy_sounds()
 
 	G.ground = Bounding_Box {
 		center    = {0, -GROUND_HEIGHT / 2, 0},
@@ -272,7 +279,13 @@ main :: proc() {
 }
 
 load_sounds :: proc() {
-	R.sounds.bg = load_bg_music("assets/sounds/bg1.mp3")
+	// R.sounds.bg = load_bg_music("assets/sounds/bg1.mp3")
+	R.sounds.microwave_beep = load_sound("assets/sounds/microwave_beep.mp3")
+	R.sounds.microwave_close = load_sound("assets/sounds/microwave_close.mp3")
+	R.sounds.microwave_finish = load_sound("assets/sounds/microwave_finish.mp3")
+	R.sounds.microwave_open = load_sound("assets/sounds/microwave_open.mp3")
+	R.sounds.microwave_start = load_sound("assets/sounds/microwave_start.mp3")
+	R.sounds.microwave_switch = load_sound("assets/sounds/microwave_switch.mp3")
 }
 
 destroy_sounds :: proc() {
@@ -319,6 +332,9 @@ Item_Info :: struct {
 	rotation:      vec3,
 	origin_offset: vec3,
 	trf:           mat4,
+	sound_drop:    string,
+	sound_pickup:  string,
+	sound_eat:     string,
 }
 
 load_items :: proc(array: json.Array) {
@@ -333,6 +349,22 @@ load_items :: proc(array: json.Array) {
 		}
 
 		saturation := cast(f32)item["saturation"].(json.Float)
+
+		drop_sound := strings.clone(item["sound_drop"].(json.String))
+		_, has_drop := R.sounds.item_sounds[drop_sound]
+		if !has_drop {
+			R.sounds.item_sounds[drop_sound] = load_sound(drop_sound)
+		}
+		eat_sound := strings.clone(item["sound_eat"].(json.String))
+		_, has_eat := R.sounds.item_sounds[eat_sound]
+		if !has_eat {
+			R.sounds.item_sounds[eat_sound] = load_sound(eat_sound)
+		}
+		pickup_sound := strings.clone(item["sound_pickup"].(json.String))
+		_, has_pickup := R.sounds.item_sounds[pickup_sound]
+		if !has_pickup {
+			R.sounds.item_sounds[pickup_sound] = load_sound(pickup_sound)
+		}
 
 		box_size := prase_vec3_from_string(item["box"].(json.String))
 		box := Bounding_Box {
@@ -355,6 +387,9 @@ load_items :: proc(array: json.Array) {
 			name          = name,
 			saturation    = saturation,
 			model_path    = model_path,
+			sound_drop    = drop_sound,
+			sound_pickup  = pickup_sound,
+			sound_eat     = eat_sound,
 			box           = box,
 			scale         = scale,
 			rotation      = rotation,
@@ -435,6 +470,8 @@ load_models :: proc() {
 	model_add_single_material(&R.models.ground, create_light_material(color = {0.4, 0.2, 0}))
 
 	microwave_texture := load_texture("assets/models/microwave/microwavetexture.png")
+	microwave_door_texture := load_texture("assets/models/microwave/door_UV.png")
+	microwave_button_texture := load_texture("assets/models/microwave/buttons_UV.png")
 	R.models.microwave = load_model("assets/models/microwave/microwave.obj")
 	R.models.microwave_door = load_model("assets/models/microwave/door.obj")
 	R.models.microwave_button = load_model("assets/models/microwave/button.obj")
@@ -445,6 +482,10 @@ load_models :: proc() {
 	model_add_single_material(&R.models.microwave_button, create_light_material(color = {0.8, 0.2, 0.2}))
 	model_add_single_material(&R.models.microwave_open_button, create_light_material(color = {0.2, 0.3, 0.2}))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(color = {0.2, 0.3, 0.2}))
+	// model_add_single_material(&r.models.microwave_door, create_light_material(microwave_door_texture))
+	// model_add_single_material(&r.models.microwave_button, create_light_material(microwave_button_texture))
+	// model_add_single_material(&r.models.microwave_open_button, create_light_material(microwave_button_texture))
+	// model_add_single_material(&r.models.microwave_thingamagic, create_light_material(microwave_button_texture))
 
 	R.models.hp = load_item_model("assets/models/hp")
 	R.models.pipe = load_item_model("assets/models/pipe")

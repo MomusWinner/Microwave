@@ -151,6 +151,26 @@ ray: Ray
 last_taked_pos: vec3
 last_taked_velocity: vec3
 
+get_item :: proc(id: Id) -> ^Item {
+	return &items[id]
+}
+
+get_item_info :: proc(id: Id) -> Item_Info {
+	return R.s.items[get_item(id).name]
+}
+
+play_item_drop_sound :: proc(id: Id) {
+	sound_restart(&R.sounds.item_sounds[get_item_info(id).sound_drop])
+}
+
+play_item_pickup_sound :: proc(id: Id) {
+	sound_restart(&R.sounds.item_sounds[get_item_info(id).sound_pickup])
+}
+
+play_item_eat_sound :: proc(id: Id) {
+	sound_restart(&R.sounds.item_sounds[get_item_info(id).sound_eat])
+}
+
 game_scene_update :: proc(s: ^Scene) {
 	if game_is_over {
 		if ve.key_is_pressed(.Enter) {
@@ -168,6 +188,7 @@ game_scene_update :: proc(s: ^Scene) {
 	if ve.key_is_pressed(.E) {
 		if taked_item != INVALID_ID {
 			eating = true
+			play_item_eat_sound(taked_item)
 		}
 	}
 
@@ -198,6 +219,7 @@ game_scene_update :: proc(s: ^Scene) {
 					break
 				}
 				taked_item = id
+				play_item_pickup_sound(taked_item)
 				break
 			}
 		}
@@ -207,6 +229,7 @@ game_scene_update :: proc(s: ^Scene) {
 		if taked_item != INVALID_ID {
 			item := &items[taked_item]
 			item.velocity = last_taked_velocity * 0.3
+			play_item_drop_sound(taked_item)
 			taked_item = INVALID_ID
 		}
 	}
@@ -262,7 +285,6 @@ game_scene_update :: proc(s: ^Scene) {
 		draw_items_debug()
 		for k, i in kinematic_box {
 			if i == 0 do continue
-			log.info(k)
 			draw_box(k)
 		}
 	}
@@ -351,7 +373,6 @@ find_combination :: proc() -> (Combination_Info, bool) {
 	for item_id, i in microwave.items {
 		item := items[item_id]
 		names[i] = item.name
-		log.info("item_name", item.name)
 	}
 
 	for c in R.s.combinations {
@@ -366,7 +387,6 @@ find_combination :: proc() -> (Combination_Info, bool) {
 		if !ok do continue
 
 		if len(names) != len(c.from) do continue
-		log.info("Combination", c)
 		return c, true
 	}
 
@@ -460,6 +480,7 @@ update_microwave :: proc() {
 		if collision.hit {
 			microwave.opening = true
 			microwave.start_open_button_anim = true
+			sound_restart(&R.sounds.microwave_open)
 		}
 	}
 
@@ -489,6 +510,8 @@ update_microwave :: proc() {
 			collision := ray_get_collision_bounding_box(ray, microwave.close_door_box)
 			if collision.hit {
 				microwave.closing = true
+
+				sound_start(&R.sounds.microwave_close)
 			}
 		}
 	}
@@ -538,6 +561,7 @@ update_microwave :: proc() {
 		if collision.hit {
 			microwave.is_working = true
 			microwave.start_start_button_anim = true
+			sound_restart(&R.sounds.microwave_start)
 		}
 	}
 
@@ -558,6 +582,10 @@ update_microwave :: proc() {
 		set_timer_seconds(cast(int)microwave.timer_seconds)
 		if microwave.timer_seconds > cast(f32)get_tiemr_seconds_by_current_thingamagic() {
 			// WORK IS DONE
+
+			sound_stop(&R.sounds.microwave_start)
+			sound_start(&R.sounds.microwave_finish)
+
 			microwave.is_working = false
 			microwave.timer_seconds = 0
 			set_timer_seconds(cast(int)get_tiemr_seconds_by_current_thingamagic())
@@ -643,10 +671,8 @@ update_microwave :: proc() {
 
 remove_item :: proc(id: Id) {
 	delete_key(&items, id)
-	log.info(microwave.items)
 	for m_id, i in microwave.items {
 		if m_id == id {
-			log.info("remove", id)
 			ordered_remove(&microwave.items, i)
 			break
 		}
@@ -661,8 +687,10 @@ get_tiemr_seconds_by_thingamagic_value :: proc(value: int) -> int {
 }
 
 update_thingmagic_value :: proc(value: int) {
+	if microwave.thingamagic_value == value do return
 	microwave.thingamagic_value = value
 	set_timer_seconds(R.s.timer_values[microwave.thingamagic_value])
+	sound_restart(&R.sounds.microwave_switch)
 }
 
 draw_microwave :: proc() {

@@ -12,6 +12,9 @@
 			"scale" : "0.3;0.3;0.3",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"sound_drop" : "assets/sounds/apple_drop.mp3",
+			"sound_eat" : "assets/sounds/apple_eat.mp3",
+			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
 		},
 		{
 			"name" : "apple",
@@ -21,6 +24,9 @@
 			"scale" : "1;1;1",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"sound_drop" : "assets/sounds/apple_drop.mp3",
+			"sound_eat" : "assets/sounds/apple_eat.mp3",
+			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
 		},
 		{
 			"name" : "red_apple",
@@ -30,6 +36,9 @@
 			"scale" : "0.3;0.3;0.1",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"sound_drop" : "assets/sounds/apple_drop.mp3",
+			"sound_eat" : "assets/sounds/apple_eat.mp3",
+			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
 		},
 		{
 			"name" : "coal",
@@ -39,6 +48,9 @@
 			"scale" : "0.3;0.8;0.3",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"sound_drop" : "assets/sounds/apple_drop.mp3",
+			"sound_eat" : "assets/sounds/apple_eat.mp3",
+			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
 		},
 	],
 	"pipe" :  {
