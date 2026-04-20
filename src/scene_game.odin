@@ -719,7 +719,7 @@ set_timer_seconds :: proc(seconds: int) {
 }
 
 update_microwave :: proc() {
-	if ve.mouse_button_is_pressed(.Left) {
+	if ve.mouse_button_is_pressed(.Left) && !microwave.is_working {
 		collision := ray_get_collision_bounding_box(ray, microwave.open_button)
 		if collision.hit {
 			microwave.opening = true
