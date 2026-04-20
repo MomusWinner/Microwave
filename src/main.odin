@@ -473,10 +473,11 @@ load_pipe :: proc(j: json.Object) {
 load_models :: proc() {
 	R.primitives.square = ve.create_primitive_square()
 
+	ground_texture := ve.load_texture("assets/textures/big_concrete_tex.png")
 	R.models.ground = create_model_from_mesh(
 		ve.create_primitive_cube({GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_WIDTH / 2}),
 	)
-	model_add_single_material(&R.models.ground, create_light_material(color = {0.18, 0.13, 0.117}))
+	model_add_single_material(&R.models.ground, create_light_material(ground_texture))
 
 	// tutorial
 	R.models.tutorial = load_item_model("assets/models/tutorial/")

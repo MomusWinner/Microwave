@@ -52,12 +52,12 @@ plaer_controller_update :: proc(p: ^Player_Controller) {
 	// if ve.key_is_down(.S) {
 	// 	player_add_force(p, -forward * {1, 0, 1} * speed)
 	// }
-	if ve.key_is_down(.A) {
-		player_add_force(p, -right * {1, 0, 1} * speed)
-	}
-	if ve.key_is_down(.D) {
-		player_add_force(p, right * {1, 0, 1} * speed)
-	}
+	// if ve.key_is_down(.A) {
+	// 	player_add_force(p, -right * {1, 0, 1} * speed)
+	// }
+	// if ve.key_is_down(.D) {
+	// 	player_add_force(p, right * {1, 0, 1} * speed)
+	// }
 
 	_player_controller_update_phys(p)
 

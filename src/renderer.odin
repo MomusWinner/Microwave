@@ -272,7 +272,7 @@ create_light_source :: proc(shadow_map: ve.Texture, color: vec3 = {1, 1, 1}) -> 
 	camera.far = 50.5
 	camera.fov = 10.0
 	camera.position = {0.001, 8, 1.7200613}
-	camera.target = camera.position - {0, 1, -0.6}
+	camera.target = camera.position - {0, 1, -0.3}
 
 	ubo := create_ubo_light_info()
 	ubo_light_info_set_dir_light(
