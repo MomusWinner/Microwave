@@ -97,10 +97,9 @@ Card :: struct {
 	pos:   vec3,
 }
 
-
 MAX_CARDS :: 4
-CARD_SCALE :: 0.3
-card_positions := [MAX_CARDS]vec3 { 	//
+CARD_SCALE :: 1
+card_positions := [MAX_CARDS]vec3 {
 	vec3{-0.5, 0.5, -0.02},
 	vec3{0.5, 0.5, -0.02},
 	vec3{-0.5, -0.5, -0.02},
@@ -122,8 +121,6 @@ Task_Board :: struct {
 	elapsed_time:     f32,
 	cards:            [dynamic]Card,
 	consumed_items:   map[string]bool,
-	// complete_cards:   [dynamic]string,
-	// scale:     vec3,
 }
 
 pipe_pos: vec3
@@ -152,17 +149,19 @@ game_over_text: Text
 eating: bool
 
 game_scene_init :: proc(s: ^Scene) {
+	bg_start(R.sounds.bg)
+
 	game_over_text = create_text(&R.fonts.kiwisoda, "GAME OVER\nPress Enter to Restart", {0, 0.0, 0}, {1, 1, 1}, 0.01)
 	text_set_position(
 		&game_over_text,
 		game_over_text.pos - {game_over_text.width / 2, game_over_text.height / 2 + 0.3, 1},
 	)
 
-	pipe_pos = {-3, 2.5, BASE_Z}
+	pipe_pos = {-3.7, 2.5, BASE_Z}
 	eating = false
 
 	// ROPE
-	start_rope_pos = {-5, 2.5, BASE_Z}
+	start_rope_pos = {-2.5, 2.8, BASE_Z}
 	rope_pos = start_rope_pos
 	rope_take_offset_y = 0
 	rope_pull_distance = 0.9
@@ -343,8 +342,7 @@ game_scene_draw :: proc(s: ^Scene) {
 
 	trf: ve.Transform
 	ve.init_trf(&trf)
-	ve.trf_set_position(&trf, {0, -GROUND_HEIGHT / 2, 0})
-	renderer_draw_model(&G.r, R.models.ground, ve.trf_get_matrix(trf))
+	renderer_draw_model(&G.r, R.models.ground, linalg.mat4Translate(G.ground.center))
 	renderer_draw_model(&G.r, R.models.pipe, linalg.mat4Translate(pipe_pos))
 	renderer_draw_model(&G.r, R.models.rope, linalg.mat4Translate(rope_pos))
 	draw_microwave()
@@ -637,7 +635,7 @@ find_combination :: proc() -> (Combination_Info, bool) {
 }
 
 init_microwave :: proc() {
-	microwave.pos = vec3{0, 0, BASE_Z + 1.5}
+	microwave.pos = vec3{0, 0, BASE_Z + 2.2}
 	microwave.scale = 1
 
 	append(&kinematic_box, Bounding_Box{center = microwave.pos - {1.7, 0, -0.3}, half_size = {1., 3, 1}})
@@ -684,13 +682,13 @@ init_microwave :: proc() {
 	//
 
 	microwave.drop_box = Bounding_Box {
-		center    = microwave.pos + microwave.scale * vec3{0.37175516, 1.0606446, -1.898627},
-		half_size = vec3{0.85, 0.8, 1.3} * microwave.scale,
+		center    = microwave.pos + microwave.scale * vec3{0.37175516, 1.0606446, -0.398627},
+		half_size = vec3{0.85, 0.4, 0.8} * microwave.scale,
 	}
 
 	lights := ubo_light_info_get_spot_lights(G.r.lsource.ubo)
-	lights[0].position = microwave.pos + {0, 1, 0} * microwave.scale
-	lights[0].color = {1, 1, 0.5}
+	lights[0].position = microwave.pos + {0, 2, 0} * microwave.scale
+	lights[0].color = {2, 2, 1}
 }
 
 set_timer_seconds :: proc(seconds: int) {

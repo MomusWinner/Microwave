@@ -16,7 +16,7 @@ import vemath "lib:ve/math"
 TARGET_FPS :: 120
 FIXED_DELTA_TIME :: 1.0 / TARGET_FPS
 
-BACKGROUND := linerize_color(vec4{0.13, 0.13, 0.15, 1})
+BACKGROUND := linerize_color(vec4{0., 0., 0., 1})
 
 NEAREST_FILTER_SAMPLER :: ve.Sampler_Info {
 	mag_filter     = .Nearest,
@@ -189,7 +189,7 @@ main :: proc() {
 
 	p_camera: ve.Camera
 	ve.init_camera(&p_camera)
-	init_player_controller(&G.player, {0, 1, 0}, p_camera)
+	init_player_controller(&G.player, {0, 1, -2}, p_camera)
 
 	G.scenes.menu_scane = create_menu_scene()
 	G.scenes.menu_scane.init(&G.scenes.menu_scane)
@@ -199,7 +199,7 @@ main :: proc() {
 	G.scenes.current_scene = &G.scenes.menu_scane
 
 	G.ground = Bounding_Box {
-		center    = {0, -GROUND_HEIGHT / 2, 0},
+		center    = {0, -GROUND_HEIGHT / 2, 7},
 		half_size = {GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_WIDTH / 2},
 	}
 
@@ -217,7 +217,6 @@ main :: proc() {
 			}
 		}
 
-		G.r.lsource.camera.target = {0, 0, 1}
 		// speed: f32 = 0.4
 		// radius: f32 = 5
 		// G.r.lsource.camera.position = vec3 {
@@ -282,7 +281,8 @@ main :: proc() {
 }
 
 load_sounds :: proc() {
-	// R.sounds.bg = load_bg_music("assets/sounds/bg1.mp3")
+	R.sounds.bg = load_bg_music("assets/sounds/ambient.mp3")
+	sound_set_volume(&R.sounds.bg, 20)
 	R.sounds.microwave_beep = load_sound("assets/sounds/microwave_beep.mp3")
 	R.sounds.microwave_close = load_sound("assets/sounds/microwave_close.mp3")
 	R.sounds.microwave_finish = load_sound("assets/sounds/microwave_finish.mp3")
@@ -471,7 +471,7 @@ load_models :: proc() {
 	R.models.ground = create_model_from_mesh(
 		ve.create_primitive_cube({GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_WIDTH / 2}),
 	)
-	model_add_single_material(&R.models.ground, create_light_material(color = {0.4, 0.2, 0}))
+	model_add_single_material(&R.models.ground, create_light_material(color = {0.18, 0.13, 0.117}))
 
 	// Task Board
 	R.models.card = ve.load_meshes("assets/models/card/card.obj")

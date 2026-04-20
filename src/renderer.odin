@@ -1,6 +1,7 @@
 package ld
 
 import "core:log"
+import linalg "core:math/linalg/glsl"
 import "lib:ve"
 
 DEPTH_SIZE :: 2048
@@ -14,9 +15,11 @@ Postprocessing_UBO :: struct {
 }
 
 Directional_Light :: struct {
-	camera: ve.Buffer,
-	color:  vec3,
-	shadow: ve.Texture,
+	camera:        ve.Buffer,
+	color:         vec3,
+	shadow:        ve.Texture,
+	cut_off:       f32,
+	outer_cut_off: f32,
 }
 
 Spot_Light :: struct {
@@ -265,13 +268,23 @@ renderer_draw_mesh_from_mtrl :: proc(
 create_light_source :: proc(shadow_map: ve.Texture, color: vec3 = {1, 1, 1}) -> Light_Source {
 	camera: ve.Camera
 	ve.init_camera(&camera, .Orthographic)
-	camera.position = {0.0001, 7, 0.0}
 	camera.near = 0.1
-	camera.far = 1000.5
-	camera.fov = 10
+	camera.far = 50.5
+	camera.fov = 10.0
+	camera.position = {0.001, 8, 1.7200613}
+	camera.target = camera.position - {0, 1, -0.6}
 
 	ubo := create_ubo_light_info()
-	ubo_light_info_set_dir_light(ubo, Directional_Light{shadow = shadow_map, camera = camera.buffer, color = color})
+	ubo_light_info_set_dir_light(
+		ubo,
+		Directional_Light {
+			shadow = shadow_map,
+			camera = camera.buffer,
+			color = color,
+			cut_off = linalg.cos_f32(linalg.radians_f32(5.5)),
+			outer_cut_off = linalg.cos_f32(linalg.radians_f32(40.5)),
+		},
+	)
 
 	return Light_Source{camera = camera, ubo = ubo}
 }

@@ -6,6 +6,178 @@ import "core:math/linalg/glsl"
 import ve "lib:ve"
 
 ///////////////////////////
+// Light_UBO
+//////////uniform_buffer////
+
+std140_Light_UBO :: struct #packed {
+	diffuse_color: glsl.vec3,
+	diffuse_texture: u32,
+	ambient: glsl.vec3,
+	pad0: f32,
+	specular: glsl.vec3,
+	pad1: f32,
+}
+
+create_ubo_light :: proc(
+	buffer_usage: ve.Buffer_Usage_Flags = {.Uniform, .Host_Write},
+	loc := #caller_location
+) -> ve.Uniform_Buffer {
+	assert(.Uniform in buffer_usage, loc = loc)
+	assert(.Host_Write in buffer_usage, loc = loc)
+	u: ve.Uniform_Buffer_Data
+	uniform_data := new(Light_UBO)
+	u.data = uniform_data
+	u.type = typeid_of(^Light_UBO)
+	u.dirty = true
+	u.apply = ubo_light_apply
+
+	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Light_UBO), loc = loc)
+
+	uniform_data.diffuse_texture = ve.INVALID_TEXTURE_HANDLE
+
+	return ve.store_uniform_buffer(u)
+}
+
+ubo_light_set_diffuse_color :: proc(h: ve.Uniform_Buffer, diffuse_color_: glsl.vec3, loc := #caller_location) {
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	data.diffuse_color = diffuse_color_
+	b.dirty = true
+}
+ubo_light_get_diffuse_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	return data.diffuse_color
+}
+
+ubo_light_set_diffuse_texture :: proc(h: ve.Uniform_Buffer, diffuse_texture_: ve.Texture, loc := #caller_location) {
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	data.diffuse_texture = diffuse_texture_
+	b.dirty = true
+}
+ubo_light_get_diffuse_texture :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> ve.Texture{
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	return data.diffuse_texture
+}
+
+ubo_light_set_ambient :: proc(h: ve.Uniform_Buffer, ambient_: glsl.vec3, loc := #caller_location) {
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	data.ambient = ambient_
+	b.dirty = true
+}
+ubo_light_get_ambient :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	return data.ambient
+}
+
+ubo_light_set_specular :: proc(h: ve.Uniform_Buffer, specular_: glsl.vec3, loc := #caller_location) {
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	data.specular = specular_
+	b.dirty = true
+}
+ubo_light_get_specular :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	data := cast(^Light_UBO)b.data
+	return data.specular
+}
+
+ubo_light_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
+	assert(b != nil, loc = loc)
+	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	if !b.dirty do return
+	src_data := cast(^Light_UBO)b.data
+
+	gpu_data_ptr : ^std140_Light_UBO
+	when size_of(std140_Light_UBO) < 254 * 1024 {
+		gpu_data := std140_Light_UBO{}
+		gpu_data_ptr = &gpu_data
+	} else {
+		gpu_data_ptr = new(std140_Light_UBO, context.temp_allocator)
+	}
+	gpu_data_ptr.diffuse_color = src_data.diffuse_color
+	gpu_data_ptr.diffuse_texture = src_data.diffuse_texture.index if ve.texture_is_valid(src_data.diffuse_texture) else max(u32)
+	gpu_data_ptr.ambient = src_data.ambient
+	gpu_data_ptr.specular = src_data.specular
+
+	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Light_UBO), loc = loc)
+	b.dirty = false
+}
+
+///////////////////////////
+// Primitive_UBO
+//////////uniform_buffer////
+
+std140_Primitive_UBO :: struct #packed {
+	color: glsl.vec3,
+	pad0: f32,
+}
+
+create_ubo_primitive :: proc(
+	buffer_usage: ve.Buffer_Usage_Flags = {.Uniform, .Host_Write},
+	loc := #caller_location
+) -> ve.Uniform_Buffer {
+	assert(.Uniform in buffer_usage, loc = loc)
+	assert(.Host_Write in buffer_usage, loc = loc)
+	u: ve.Uniform_Buffer_Data
+	uniform_data := new(Primitive_UBO)
+	u.data = uniform_data
+	u.type = typeid_of(^Primitive_UBO)
+	u.dirty = true
+	u.apply = ubo_primitive_apply
+
+	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Primitive_UBO), loc = loc)
+
+
+	return ve.store_uniform_buffer(u)
+}
+
+ubo_primitive_set_color :: proc(h: ve.Uniform_Buffer, color_: glsl.vec3, loc := #caller_location) {
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
+	data := cast(^Primitive_UBO)b.data
+	data.color = color_
+	b.dirty = true
+}
+ubo_primitive_get_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
+	b := ve.get_uniform_buffer(h, loc)
+	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
+	data := cast(^Primitive_UBO)b.data
+	return data.color
+}
+
+ubo_primitive_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
+	assert(b != nil, loc = loc)
+	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
+	if !b.dirty do return
+	src_data := cast(^Primitive_UBO)b.data
+
+	gpu_data_ptr : ^std140_Primitive_UBO
+	when size_of(std140_Primitive_UBO) < 254 * 1024 {
+		gpu_data := std140_Primitive_UBO{}
+		gpu_data_ptr = &gpu_data
+	} else {
+		gpu_data_ptr = new(std140_Primitive_UBO, context.temp_allocator)
+	}
+	gpu_data_ptr.color = src_data.color
+
+	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Primitive_UBO), loc = loc)
+	b.dirty = false
+}
+
+///////////////////////////
 // Postprocessing_UBO
 //////////uniform_buffer////
 
@@ -194,87 +366,6 @@ ubo_camera_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
 }
 
 ///////////////////////////
-// Text_UBO
-//////////uniform_buffer////
-
-std140_Text_UBO :: struct #packed {
-	glyph: u32,
-	pad0: f32,
-	pad1: f32,
-	pad2: f32,
-	color: glsl.vec3,
-	pad3: f32,
-}
-
-create_ubo_text :: proc(
-	buffer_usage: ve.Buffer_Usage_Flags = {.Uniform, .Host_Write},
-	loc := #caller_location
-) -> ve.Uniform_Buffer {
-	assert(.Uniform in buffer_usage, loc = loc)
-	assert(.Host_Write in buffer_usage, loc = loc)
-	u: ve.Uniform_Buffer_Data
-	uniform_data := new(Text_UBO)
-	u.data = uniform_data
-	u.type = typeid_of(^Text_UBO)
-	u.dirty = true
-	u.apply = ubo_text_apply
-
-	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Text_UBO), loc = loc)
-
-	uniform_data.glyph = ve.INVALID_TEXTURE_HANDLE
-
-	return ve.store_uniform_buffer(u)
-}
-
-ubo_text_set_glyph :: proc(h: ve.Uniform_Buffer, glyph_: ve.Texture, loc := #caller_location) {
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Text_UBO), loc = loc)
-	data := cast(^Text_UBO)b.data
-	data.glyph = glyph_
-	b.dirty = true
-}
-ubo_text_get_glyph :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> ve.Texture{
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Text_UBO), loc = loc)
-	data := cast(^Text_UBO)b.data
-	return data.glyph
-}
-
-ubo_text_set_color :: proc(h: ve.Uniform_Buffer, color_: glsl.vec3, loc := #caller_location) {
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Text_UBO), loc = loc)
-	data := cast(^Text_UBO)b.data
-	data.color = color_
-	b.dirty = true
-}
-ubo_text_get_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Text_UBO), loc = loc)
-	data := cast(^Text_UBO)b.data
-	return data.color
-}
-
-ubo_text_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
-	assert(b != nil, loc = loc)
-	assert(b.type == typeid_of(^Text_UBO), loc = loc)
-	if !b.dirty do return
-	src_data := cast(^Text_UBO)b.data
-
-	gpu_data_ptr : ^std140_Text_UBO
-	when size_of(std140_Text_UBO) < 254 * 1024 {
-		gpu_data := std140_Text_UBO{}
-		gpu_data_ptr = &gpu_data
-	} else {
-		gpu_data_ptr = new(std140_Text_UBO, context.temp_allocator)
-	}
-	gpu_data_ptr.glyph = src_data.glyph.index if ve.texture_is_valid(src_data.glyph) else max(u32)
-	gpu_data_ptr.color = src_data.color
-
-	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Text_UBO), loc = loc)
-	b.dirty = false
-}
-
-///////////////////////////
 // Spot_Light
 /////////////dependence////
 
@@ -330,12 +421,18 @@ std140_Directional_Light :: struct #packed {
 	pad2: f32,
 	color: glsl.vec3,
 	shadow: u32,
+	cut_off: f32,
+	outer_cut_off: f32,
+	pad3: f32,
+	pad4: f32,
 }
 
 conv_directional_light_to_data_std140 :: proc(dst: ^std140_Directional_Light, src: Directional_Light, loc := #caller_location) {
 	dst.camera = src.camera.index if ve.buffer_is_valid(src.camera) else max(u32)
 	dst.color = src.color
 	dst.shadow = src.shadow.index if ve.texture_is_valid(src.shadow) else max(u32)
+	dst.cut_off = src.cut_off
+	dst.outer_cut_off = src.outer_cut_off
 
 }
 conv_directional_light_array_to_data_std140 :: proc(dst: []std140_Directional_Light, src: []Directional_Light, loc := #caller_location) {
@@ -353,12 +450,18 @@ std430_Directional_Light :: struct #packed {
 	pad2: f32,
 	color: glsl.vec3,
 	shadow: u32,
+	cut_off: f32,
+	outer_cut_off: f32,
+	pad3: f32,
+	pad4: f32,
 }
 
 conv_directional_light_to_data_std430 :: proc(dst: ^std430_Directional_Light, src: Directional_Light, loc := #caller_location) {
 	dst.camera = src.camera.index if ve.buffer_is_valid(src.camera) else max(u32)
 	dst.color = src.color
 	dst.shadow = src.shadow.index if ve.texture_is_valid(src.shadow) else max(u32)
+	dst.cut_off = src.cut_off
+	dst.outer_cut_off = src.outer_cut_off
 
 }
 conv_directional_light_array_to_data_std430 :: proc(dst: []std430_Directional_Light, src: []Directional_Light, loc := #caller_location) {
@@ -448,113 +551,83 @@ ubo_light_info_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
 }
 
 ///////////////////////////
-// Light_UBO
+// Text_UBO
 //////////uniform_buffer////
 
-std140_Light_UBO :: struct #packed {
-	diffuse_color: glsl.vec3,
-	diffuse_texture: u32,
-	ambient: glsl.vec3,
+std140_Text_UBO :: struct #packed {
+	glyph: u32,
 	pad0: f32,
-	specular: glsl.vec3,
 	pad1: f32,
+	pad2: f32,
+	color: glsl.vec3,
+	pad3: f32,
 }
 
-create_ubo_light :: proc(
+create_ubo_text :: proc(
 	buffer_usage: ve.Buffer_Usage_Flags = {.Uniform, .Host_Write},
 	loc := #caller_location
 ) -> ve.Uniform_Buffer {
 	assert(.Uniform in buffer_usage, loc = loc)
 	assert(.Host_Write in buffer_usage, loc = loc)
 	u: ve.Uniform_Buffer_Data
-	uniform_data := new(Light_UBO)
+	uniform_data := new(Text_UBO)
 	u.data = uniform_data
-	u.type = typeid_of(^Light_UBO)
+	u.type = typeid_of(^Text_UBO)
 	u.dirty = true
-	u.apply = ubo_light_apply
+	u.apply = ubo_text_apply
 
-	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Light_UBO), loc = loc)
+	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Text_UBO), loc = loc)
 
-	uniform_data.diffuse_texture = ve.INVALID_TEXTURE_HANDLE
+	uniform_data.glyph = ve.INVALID_TEXTURE_HANDLE
 
 	return ve.store_uniform_buffer(u)
 }
 
-ubo_light_set_diffuse_color :: proc(h: ve.Uniform_Buffer, diffuse_color_: glsl.vec3, loc := #caller_location) {
+ubo_text_set_glyph :: proc(h: ve.Uniform_Buffer, glyph_: ve.Texture, loc := #caller_location) {
 	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	data.diffuse_color = diffuse_color_
+	assert(b.type == typeid_of(^Text_UBO), loc = loc)
+	data := cast(^Text_UBO)b.data
+	data.glyph = glyph_
 	b.dirty = true
 }
-ubo_light_get_diffuse_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
+ubo_text_get_glyph :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> ve.Texture{
 	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	return data.diffuse_color
+	assert(b.type == typeid_of(^Text_UBO), loc = loc)
+	data := cast(^Text_UBO)b.data
+	return data.glyph
 }
 
-ubo_light_set_diffuse_texture :: proc(h: ve.Uniform_Buffer, diffuse_texture_: ve.Texture, loc := #caller_location) {
+ubo_text_set_color :: proc(h: ve.Uniform_Buffer, color_: glsl.vec3, loc := #caller_location) {
 	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	data.diffuse_texture = diffuse_texture_
+	assert(b.type == typeid_of(^Text_UBO), loc = loc)
+	data := cast(^Text_UBO)b.data
+	data.color = color_
 	b.dirty = true
 }
-ubo_light_get_diffuse_texture :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> ve.Texture{
+ubo_text_get_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
 	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	return data.diffuse_texture
+	assert(b.type == typeid_of(^Text_UBO), loc = loc)
+	data := cast(^Text_UBO)b.data
+	return data.color
 }
 
-ubo_light_set_ambient :: proc(h: ve.Uniform_Buffer, ambient_: glsl.vec3, loc := #caller_location) {
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	data.ambient = ambient_
-	b.dirty = true
-}
-ubo_light_get_ambient :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	return data.ambient
-}
-
-ubo_light_set_specular :: proc(h: ve.Uniform_Buffer, specular_: glsl.vec3, loc := #caller_location) {
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	data.specular = specular_
-	b.dirty = true
-}
-ubo_light_get_specular :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
-	data := cast(^Light_UBO)b.data
-	return data.specular
-}
-
-ubo_light_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
+ubo_text_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
 	assert(b != nil, loc = loc)
-	assert(b.type == typeid_of(^Light_UBO), loc = loc)
+	assert(b.type == typeid_of(^Text_UBO), loc = loc)
 	if !b.dirty do return
-	src_data := cast(^Light_UBO)b.data
+	src_data := cast(^Text_UBO)b.data
 
-	gpu_data_ptr : ^std140_Light_UBO
-	when size_of(std140_Light_UBO) < 254 * 1024 {
-		gpu_data := std140_Light_UBO{}
+	gpu_data_ptr : ^std140_Text_UBO
+	when size_of(std140_Text_UBO) < 254 * 1024 {
+		gpu_data := std140_Text_UBO{}
 		gpu_data_ptr = &gpu_data
 	} else {
-		gpu_data_ptr = new(std140_Light_UBO, context.temp_allocator)
+		gpu_data_ptr = new(std140_Text_UBO, context.temp_allocator)
 	}
-	gpu_data_ptr.diffuse_color = src_data.diffuse_color
-	gpu_data_ptr.diffuse_texture = src_data.diffuse_texture.index if ve.texture_is_valid(src_data.diffuse_texture) else max(u32)
-	gpu_data_ptr.ambient = src_data.ambient
-	gpu_data_ptr.specular = src_data.specular
+	gpu_data_ptr.glyph = src_data.glyph.index if ve.texture_is_valid(src_data.glyph) else max(u32)
+	gpu_data_ptr.color = src_data.color
 
-	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Light_UBO), loc = loc)
+	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Text_UBO), loc = loc)
 	b.dirty = false
 }
 
@@ -632,66 +705,5 @@ ubo_base_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
 	gpu_data_ptr.texture = src_data.texture.index if ve.texture_is_valid(src_data.texture) else max(u32)
 
 	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Base_Ubo), loc = loc)
-	b.dirty = false
-}
-
-///////////////////////////
-// Primitive_UBO
-//////////uniform_buffer////
-
-std140_Primitive_UBO :: struct #packed {
-	color: glsl.vec3,
-	pad0: f32,
-}
-
-create_ubo_primitive :: proc(
-	buffer_usage: ve.Buffer_Usage_Flags = {.Uniform, .Host_Write},
-	loc := #caller_location
-) -> ve.Uniform_Buffer {
-	assert(.Uniform in buffer_usage, loc = loc)
-	assert(.Host_Write in buffer_usage, loc = loc)
-	u: ve.Uniform_Buffer_Data
-	uniform_data := new(Primitive_UBO)
-	u.data = uniform_data
-	u.type = typeid_of(^Primitive_UBO)
-	u.dirty = true
-	u.apply = ubo_primitive_apply
-
-	u.buffer = ve.create_buffer(buffer_usage, size_of(std140_Primitive_UBO), loc = loc)
-
-
-	return ve.store_uniform_buffer(u)
-}
-
-ubo_primitive_set_color :: proc(h: ve.Uniform_Buffer, color_: glsl.vec3, loc := #caller_location) {
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
-	data := cast(^Primitive_UBO)b.data
-	data.color = color_
-	b.dirty = true
-}
-ubo_primitive_get_color :: proc(h: ve.Uniform_Buffer, loc := #caller_location) -> glsl.vec3{
-	b := ve.get_uniform_buffer(h, loc)
-	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
-	data := cast(^Primitive_UBO)b.data
-	return data.color
-}
-
-ubo_primitive_apply :: proc(b: ^ve.Cached_Buffer, loc := #caller_location) {
-	assert(b != nil, loc = loc)
-	assert(b.type == typeid_of(^Primitive_UBO), loc = loc)
-	if !b.dirty do return
-	src_data := cast(^Primitive_UBO)b.data
-
-	gpu_data_ptr : ^std140_Primitive_UBO
-	when size_of(std140_Primitive_UBO) < 254 * 1024 {
-		gpu_data := std140_Primitive_UBO{}
-		gpu_data_ptr = &gpu_data
-	} else {
-		gpu_data_ptr = new(std140_Primitive_UBO, context.temp_allocator)
-	}
-	gpu_data_ptr.color = src_data.color
-
-	ve.buffer_fill(b.buffer, gpu_data_ptr, size_of(std140_Primitive_UBO), loc = loc)
 	b.dirty = false
 }

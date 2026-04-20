@@ -46,16 +46,17 @@ float getThreshold(ivec2 pixelPos) {
 }
 
 void main() {
-	vec3 color = texture(getTexture(), fragTexCoord).rgb;
+	// vec3 color = texture(getTexture(), fragTexCoord).rgb;
+
 	// vec3 color = texture(gTextures2D[4], fragTexCoord).rgb;
 	// debugPrintfEXT("texture: %f", getPostprocessingUBO(H0()).brightness_texture);
 
-	// vec3 hdrColor = texture(gTextures2D[getPostprocessingUBO(H0()).texture], fragTexCoord).rgb;
-	// vec3 bloomColor = texture(gTextures2D[getPostprocessingUBO(H0()).brightness_texture], fragTexCoord).rgb;
-	// hdrColor += bloomColor;
+	vec3 hdrColor = texture(gTextures2D[getPostprocessingUBO(H0()).texture], fragTexCoord).rgb;
+	vec3 bloomColor = texture(gTextures2D[getPostprocessingUBO(H0()).brightness_texture], fragTexCoord).rgb;
+	hdrColor += bloomColor;
 	//
 	// // exposure tone mapping
-	// vec3 color = vec3(1.0) - exp(-hdrColor * getPostprocessingUBO(H0()).exposure);
+	vec3 color = vec3(1.0) - exp(-hdrColor * getPostprocessingUBO(H0()).exposure);
 	
 	// ivec2 pixelPos = ivec2(gl_FragCoord.xy);
 	ivec2 pixelPos = ivec2(textureSize(getTexture(), 0) * fragTexCoord);

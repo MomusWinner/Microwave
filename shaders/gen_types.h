@@ -5,6 +5,25 @@
 
 #include "buildin:bindless.h"
 
+// Light_UBO
+RegisterUniform(LightUBO, {
+	vec3 diffuse_color;
+	uint diffuse_texture;
+	vec3 ambient;
+	vec3 specular;
+});
+
+#define getLightUBO(handle) GetResource(LightUBO, handle)
+
+
+// Primitive_UBO
+RegisterUniform(PrimitiveUBO, {
+	vec3 color;
+});
+
+#define getPrimitiveUBO(handle) GetResource(PrimitiveUBO, handle)
+
+
 // Postprocessing_UBO
 RegisterUniform(PostprocessingUBO, {
 	uint texture;
@@ -25,15 +44,6 @@ RegisterUniform(CameraUBO, {
 #define getCameraUBO(handle) GetResource(CameraUBO, handle)
 
 
-// Text_UBO
-RegisterUniform(TextUBO, {
-	uint glyph;
-	vec3 color;
-});
-
-#define getTextUBO(handle) GetResource(TextUBO, handle)
-
-
 // Spot_Light
 struct SpotLight {
 	vec3 color;
@@ -45,6 +55,8 @@ struct DirectionalLight {
 	uint camera;
 	vec3 color;
 	uint shadow;
+	float cut_off;
+	float outer_cut_off;
 };
 
 // Light_Info_UBO
@@ -56,15 +68,13 @@ RegisterUniform(LightInfoUBO, {
 #define getLightInfoUBO(handle) GetResource(LightInfoUBO, handle)
 
 
-// Light_UBO
-RegisterUniform(LightUBO, {
-	vec3 diffuse_color;
-	uint diffuse_texture;
-	vec3 ambient;
-	vec3 specular;
+// Text_UBO
+RegisterUniform(TextUBO, {
+	uint glyph;
+	vec3 color;
 });
 
-#define getLightUBO(handle) GetResource(LightUBO, handle)
+#define getTextUBO(handle) GetResource(TextUBO, handle)
 
 
 // Base_Ubo
@@ -74,14 +84,6 @@ RegisterUniform(BaseUbo, {
 });
 
 #define getBaseUBO(handle) GetResource(BaseUbo, handle)
-
-
-// Primitive_UBO
-RegisterUniform(PrimitiveUBO, {
-	vec3 color;
-});
-
-#define getPrimitiveUBO(handle) GetResource(PrimitiveUBO, handle)
 
 
 #endif

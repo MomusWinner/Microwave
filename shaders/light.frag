@@ -57,8 +57,15 @@ vec3 calculateDirLighting() {
 	vec3 normal = normalize(fragNormal);
 	vec3 lightColor = getLightInfo().dir_light.color;
 
-	// diffuse
+  vec3 lightFragDir = normalize(getLightSourceCamera().position - fragPos);
 	vec3 lightDir = normalize(- (getLightSourceCamera().target - getLightSourceCamera().position));
+
+	float theta = dot(lightFragDir, lightDir); 
+	float epsilon = getLightInfo().dir_light.cut_off - getLightInfo().dir_light.outer_cut_off;
+	float intensity = clamp((theta - getLightInfo().dir_light.outer_cut_off) / epsilon, 0.0, 1.0);
+	// float intensity = 1;
+
+	// diffuse
 	float diff = max(dot(lightDir, normal), 0.0);
 	vec3 diffuse = diff * lightColor;
 
@@ -69,7 +76,7 @@ vec3 calculateDirLighting() {
 	spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
 	vec3 specular = spec * lightColor;
 
-	return specular + diffuse;
+	return (specular + diffuse) * intensity;
 }
 
 vec3 calculateSpotLighting() {
