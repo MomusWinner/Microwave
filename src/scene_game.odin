@@ -162,7 +162,13 @@ game_scene_init :: proc(s: ^Scene) {
 	)
 
 	if finish_text.font == nil {
-		finish_text = create_text(&R.fonts.kiwisoda, "FINISH\nPress Enter to Restart", {0, 0.0, 0}, {1, 1, 1}, 0.01)
+		finish_text = create_text(
+			&R.fonts.kiwisoda,
+			"Thanks for playing our demo \n\nEat well!\n\nEat well!\n\nEat well!\n\nEat well!\n\nPress Enter to Restart",
+			{0, 0.0, 0},
+			{1, 1, 1},
+			0.01,
+		)
 		text_set_position(
 			&finish_text,
 			game_over_text.pos - {game_over_text.width / 2, game_over_text.height / 2 + 0.3, 1},
