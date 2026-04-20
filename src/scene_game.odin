@@ -531,7 +531,7 @@ update_task_board :: proc() {
 	}
 
 	// Open / Close
-	if ve.key_is_pressed(.O) && !task_board.opening && !task_board.is_open {
+	if ve.key_is_pressed(.Space) && !task_board.opening && !task_board.is_open {
 		task_board.opening = true
 		task_board.pos = task_board_get_end_pos()
 		task_board.opening_t = 0
@@ -552,7 +552,7 @@ update_task_board :: proc() {
 		task_board.pos = task_board_get_start_pos()
 	}
 
-	if ve.key_is_pressed(.O) && task_board.is_open && !task_board.closing {
+	if ve.key_is_pressed(.Space) && task_board.is_open && !task_board.closing {
 		task_board.closing = true
 		task_board.is_open = false
 		task_board.opening = false
