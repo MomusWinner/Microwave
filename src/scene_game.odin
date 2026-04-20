@@ -406,11 +406,12 @@ task_board_get_end_pos :: proc() -> vec3 {
 complete_card :: proc(name: string) {
 	for c, i in task_board.cards {
 		if c.name == name {
-			task_board.consumed_items[name] = true
 			ordered_remove(&task_board.cards, i)
 			break
 		}
 	}
+
+	task_board.consumed_items[name] = true
 
 	for &c, i in task_board.cards {
 		i := len(task_board.cards) - 1
@@ -438,26 +439,45 @@ get_next_recommendation :: proc() -> []string {
 		}
 	}
 
-	for consumed_item in task_board.consumed_items {
-		for combo in R.s.combinations {
-			if !slice.contains(combo.from[:], consumed_item) do continue
+	for combo in R.s.combinations {
 
-			all_consumed := true
-			for from_item in combo.from {
-				if from_item not_in task_board.consumed_items {
-					all_consumed = false
-					break
-				}
+		ok: bool
+		for consumed_item in task_board.consumed_items {
+			if slice.contains(combo.from[:], consumed_item) {
+				ok = true
+				break
 			}
-			if !all_consumed do continue
+		}
 
-			for to_item in combo.to {
-				if to_item.item in R.s.items {
-					append(&recommendations, to_item.item)
-				}
+		if !ok do continue
+
+		for to_item in combo.to {
+			if to_item.item in R.s.items {
+				append(&recommendations, to_item.item)
 			}
 		}
 	}
+
+	// for consumed_item in task_board.consumed_items {
+	// 	for combo in R.s.combinations {
+	// 		if !slice.contains(combo.from[:], consumed_item) do continue
+	//
+	// 		consumed := false
+	// 		for from_item in combo.from {
+	// 			if from_item in task_board.consumed_items {
+	// 				consumed = true
+	// 				break
+	// 			}
+	// 		}
+	// 		if !consumed do continue
+	//
+	// 		for to_item in combo.to {
+	// 			if to_item.item in R.s.items {
+	// 				append(&recommendations, to_item.item)
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	unique_recs := make([dynamic]string, context.temp_allocator)
 	for rec in recommendations {
