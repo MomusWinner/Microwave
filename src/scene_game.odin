@@ -132,7 +132,7 @@ pipe_pos: vec3
 start_rope_pos: vec3
 rope_pos: vec3
 get_rope_box :: proc() -> Bounding_Box {
-	return Bounding_Box{center = rope_pos + vec3{0, -1.4, 0}, half_size = {0.4, 0.9, 0.4}}
+	return Bounding_Box{center = rope_pos + vec3{0, 0, 0}, half_size = {0.4, 0.9, 0.4}}
 }
 rope_take_offset_y: f32
 rope_pull_distance: f32
@@ -162,7 +162,7 @@ game_scene_init :: proc(s: ^Scene) {
 	eating = false
 
 	// ROPE
-	start_rope_pos = {-5, 4.5, BASE_Z}
+	start_rope_pos = {-5, 2.5, BASE_Z}
 	rope_pos = start_rope_pos
 	rope_take_offset_y = 0
 	rope_pull_distance = 0.9

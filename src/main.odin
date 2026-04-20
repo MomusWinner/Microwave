@@ -473,9 +473,9 @@ load_models :: proc() {
 	)
 	model_add_single_material(&R.models.ground, create_light_material(color = {0.4, 0.2, 0}))
 
+	// Task Board
 	R.models.card = ve.load_meshes("assets/models/card/card.obj")
-	R.models.task_board = load_model("assets/models/card/card.obj")
-	model_add_single_material(&R.models.task_board, create_light_material(color = {0.4, 0.2, 0.1}))
+	R.models.task_board = load_item_model("assets/models/task_board")
 
 	microwave_texture := load_texture("assets/models/microwave/microwavetexture.png")
 	microwave_door_texture := load_texture("assets/models/microwave/door_UV.png")

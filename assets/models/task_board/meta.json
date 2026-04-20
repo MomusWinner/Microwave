@@ -1,9 +1,9 @@
 {
-	"model": "rope.obj"
+	"model": "workboard.obj"
 	"materials" : [
 		{
 			"name": "light",
-			"texture" : "rope_tex.png",
+			"texture" : "workboard_tex.png",
 			"color" : "1;1;1",
 		}
 	],
