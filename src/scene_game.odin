@@ -146,7 +146,8 @@ game_is_over: bool
 
 game_over_text: Text
 
-eating: bool
+eating_t: f32
+eating_item: Id
 
 game_scene_init :: proc(s: ^Scene) {
 	bg_start(R.sounds.bg)
@@ -158,7 +159,7 @@ game_scene_init :: proc(s: ^Scene) {
 	)
 
 	pipe_pos = {-3.7, 2.5, BASE_Z}
-	eating = false
+	eating_item = INVALID_ID
 
 	// ROPE
 	start_rope_pos = {-2.5, 2.8, BASE_Z}
@@ -209,7 +210,7 @@ play_item_eat_sound :: proc(id: Id) {
 eat_item :: proc(id: Id) {
 	item := items[id]
 	item_info := R.s.items[item.name]
-	remove_item(taked_item)
+	remove_item(eating_item)
 	hp_saturation += item_info.saturation
 	if hp_saturation > 1 {
 		hp_saturation = 1
@@ -231,21 +232,28 @@ game_scene_update :: proc(s: ^Scene) {
 		game_over()
 	}
 
-	update_task_board()
-
-	if ve.key_is_pressed(.E) || ve.mouse_button_is_pressed(.Right) {
+	if (ve.key_is_pressed(.E) || ve.mouse_button_is_pressed(.Right)) && eating_item == INVALID_ID {
 		if taked_item != INVALID_ID {
-			eating = true
-			play_item_eat_sound(taked_item)
+			eating_item = taked_item
+			taked_item = INVALID_ID
+			eating_t = 0
 		}
 	}
 
-	if eating {
-		eat_item(taked_item)
-		taked_item = INVALID_ID
-		eating = false
+	if eating_item != INVALID_ID {
+		eating_t += ve.time_get_delta() * 10
+		item := get_item(eating_item)
+		item.box.center = linalg.lerp(item.box.center, G.player.camera.position, eating_t)
+		// eating_pos
+		if eating_t > 1 {
+			play_item_eat_sound(eating_item)
+			eat_item(eating_item)
+			eating_item = INVALID_ID
+			eating_t = 0
+		}
 	}
 
+	update_task_board()
 	plaer_controller_update(&G.player)
 	mouse := ve.mouse_get_position()
 	ray = get_screen_to_world_ray(mouse, G.player.camera, ve.screen_get_width(), ve.screen_get_height())
@@ -261,7 +269,10 @@ game_scene_update :: proc(s: ^Scene) {
 			collision := ray_get_collision_bounding_box(ray, item.box)
 			if collision.hit {
 				if slice.contains(microwave.items[:], id) && !microwave.is_open {
-					break
+					continue
+				}
+				if eating_item == id {
+					continue
 				}
 				taked_item = id
 				play_item_pickup_sound(taked_item)
