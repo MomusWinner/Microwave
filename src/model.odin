@@ -122,6 +122,7 @@ load_item_model :: proc(path: string) -> Model {
 	}
 
 	model.mesh_to_material = mesh_to_material[:]
+	model.materials = materials[:]
 	return model
 }
 
