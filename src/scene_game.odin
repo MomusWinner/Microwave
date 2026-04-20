@@ -409,6 +409,11 @@ complete_card :: proc(name: string) {
 			break
 		}
 	}
+
+	for &c, i in task_board.cards {
+		i := len(task_board.cards) - 1
+		task_board.cards[i].pos = card_positions[i]
+	}
 }
 
 get_next_recommendation :: proc() -> []string {
