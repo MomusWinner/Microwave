@@ -34,7 +34,7 @@ Item :: struct {
 	velocity:     vec3,
 }
 
-BASE_Z :: 4.0
+BASE_Z :: 5.0
 
 Angle_Value :: struct {
 	value: int,
@@ -91,6 +91,41 @@ Microwave :: struct {
 	items:                           [dynamic]Id,
 }
 
+Card :: struct {
+	name:  string,
+	model: Model,
+	pos:   vec3,
+}
+
+
+MAX_CARDS :: 4
+CARD_SCALE :: 0.3
+card_positions := [MAX_CARDS]vec3 { 	//
+	vec3{-0.5, 0.5, -0.02},
+	vec3{0.5, 0.5, -0.02},
+	vec3{-0.5, -0.5, -0.02},
+	vec3{0.5, -0.5, -0.02},
+}
+
+task_board: Task_Board
+Task_Board :: struct {
+	pos:              vec3,
+	scale:            f32,
+	start_pos_offset: vec3,
+	rotation:         mat4,
+	end_pos_offset:   vec3,
+	opening:          bool,
+	opening_t:        f32,
+	closing:          bool,
+	closing_t:        f32,
+	is_open:          bool,
+	elapsed_time:     f32,
+	cards:            [dynamic]Card,
+	consumed_items:   map[string]bool,
+	// complete_cards:   [dynamic]string,
+	// scale:     vec3,
+}
+
 pipe_pos: vec3
 
 // ROPE
@@ -144,6 +179,7 @@ game_scene_init :: proc(s: ^Scene) {
 
 	append(&kinematic_box, Bounding_Box{half_size = {100, 0.5, 100}, center = {0, -0.5, 0}})
 	init_microwave()
+	init_task_board()
 }
 
 ray: Ray
@@ -171,6 +207,14 @@ play_item_eat_sound :: proc(id: Id) {
 	sound_restart(&R.sounds.item_sounds[get_item_info(id).sound_eat])
 }
 
+eat_item :: proc(id: Id) {
+	item := items[id]
+	item_info := R.s.items[item.name]
+	remove_item(taked_item)
+	hp_saturation += item_info.saturation
+	complete_card(item.name)
+}
+
 game_scene_update :: proc(s: ^Scene) {
 	if game_is_over {
 		if ve.key_is_pressed(.Enter) {
@@ -185,6 +229,8 @@ game_scene_update :: proc(s: ^Scene) {
 		game_over()
 	}
 
+	update_task_board()
+
 	if ve.key_is_pressed(.E) {
 		if taked_item != INVALID_ID {
 			eating = true
@@ -193,10 +239,7 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if eating {
-		item := items[taked_item]
-		item_info := R.s.items[item.name]
-		remove_item(taked_item)
-		hp_saturation += item_info.saturation
+		eat_item(taked_item)
 		taked_item = INVALID_ID
 		eating = false
 	}
@@ -310,6 +353,7 @@ game_scene_draw :: proc(s: ^Scene) {
 	)
 
 	draw_items()
+	draw_task_board()
 }
 
 game_scene_reset :: proc() {
@@ -318,11 +362,207 @@ game_scene_reset :: proc() {
 
 	destroy_text(&game_over_text)
 
+	clear(&task_board.cards)
+	clear(&task_board.consumed_items)
+	task_board = Task_Board{}
+
+	sound_stop(&R.sounds.microwave_beep)
+	sound_stop(&R.sounds.microwave_close)
+	sound_stop(&R.sounds.microwave_finish)
+	sound_stop(&R.sounds.microwave_open)
+	sound_stop(&R.sounds.microwave_start)
+	sound_stop(&R.sounds.microwave_switch)
+
 	delete(microwave.items)
 	microwave = Microwave{}
 }
 
 game_scene_destroy :: proc(s: ^Scene) {
+
+}
+
+task_board_get_start_pos :: proc() -> vec3 {
+	return G.player.camera.position + task_board.start_pos_offset
+}
+
+task_board_get_end_pos :: proc() -> vec3 {
+	return G.player.camera.position + task_board.end_pos_offset
+}
+
+complete_card :: proc(name: string) {
+	for c, i in task_board.cards {
+		if c.name == name {
+			task_board.consumed_items[name] = true
+			ordered_remove(&task_board.cards, i)
+			break
+		}
+	}
+}
+
+get_next_recommendation :: proc() -> []string {
+	recommendations := make([dynamic]string, context.temp_allocator)
+
+	for _, item in R.s.items {
+		has_combo := false
+		for combo in R.s.combinations {
+			for to in combo.to {
+				if to.item == item.name {
+					has_combo = true
+					break
+				}
+			}
+			if has_combo do break
+		}
+
+		if !has_combo && item.name not_in task_board.consumed_items {
+			append(&recommendations, item.name)
+		}
+	}
+
+
+	for consumed_item in task_board.consumed_items {
+		for combo in R.s.combinations {
+			if !slice.contains(combo.from[:], consumed_item) do continue
+
+			all_consumed := true
+			for from_item in combo.from {
+				if from_item not_in task_board.consumed_items {
+					all_consumed = false
+					break
+				}
+			}
+
+			if all_consumed {
+				for to_item in combo.to {
+					if to_item.item in R.s.items {
+						append(&recommendations, to_item.item)
+					}
+				}
+			}
+		}
+	}
+
+	unique_recs := make([dynamic]string, context.temp_allocator)
+	for rec in recommendations {
+		if rec not_in task_board.consumed_items && !slice.contains(unique_recs[:], rec) {
+
+			already_added := false
+			for c in task_board.cards {
+				if c.name == rec {
+					already_added = true
+					break
+				}
+			}
+
+			if !already_added {
+				append(&unique_recs, rec)
+			}
+		}
+	}
+
+	return unique_recs[:]
+}
+
+create_card :: proc(item: Item_Info) -> Card {
+	model := Model {
+		meshes = slice.clone(R.models.card[:]),
+	}
+	model_add_single_material(&model, create_light_material(item.card))
+	card := Card {
+		name  = item.name,
+		model = model,
+	}
+	append(&task_board.cards, card)
+	i := len(task_board.cards) - 1
+	task_board.cards[i].pos = card_positions[i]
+	return card
+}
+
+init_task_board :: proc() {
+	task_board.start_pos_offset = {0, -1, 4}
+	task_board.end_pos_offset = {0, -5, 1}
+	task_board.pos = task_board_get_end_pos()
+	task_board.rotation = linalg.mat4Rotate(vec3{1, 0, 0}, linalg.PI / 9.0)
+	task_board.scale = 1.4
+	task_board.is_open = false
+	task_board.opening = false
+	task_board.closing = false
+	task_board.elapsed_time = 0
+}
+
+draw_task_board :: proc() {
+	renderer_draw_model(
+		&G.r,
+		R.models.task_board,
+		linalg.mat4Translate(task_board.pos) * task_board.rotation * linalg.mat4Scale(task_board.scale),
+	)
+
+	for card in task_board.cards {
+		renderer_draw_model(
+			&G.r,
+			card.model,
+			linalg.mat4Translate(task_board.pos) *
+			task_board.rotation *
+			linalg.mat4Translate(+card.pos) *
+			linalg.mat4Scale(CARD_SCALE),
+		)
+	}
+}
+
+update_task_board :: proc() {
+	task_board.elapsed_time += ve.time_get_delta()
+
+	if task_board.elapsed_time > 1 {
+		task_board.elapsed_time = 0
+		recs := get_next_recommendation()
+		if len(task_board.cards) < MAX_CARDS && len(recs) > 0 {
+			create_card(R.s.items[recs[0]])
+		}
+	}
+
+	// Open / Close
+	if ve.key_is_pressed(.O) && !task_board.opening && !task_board.is_open {
+		task_board.opening = true
+		task_board.pos = task_board_get_end_pos()
+		task_board.opening_t = 0
+	}
+
+	if task_board.opening {
+		task_board.opening_t += ve.time_get_delta() * 4
+		task_board.pos = linalg.lerp(task_board.pos, task_board_get_start_pos(), task_board.opening_t)
+
+		if task_board.opening_t > 1 {
+			task_board.opening = false
+			task_board.is_open = true
+			task_board.pos = task_board_get_start_pos()
+		}
+	}
+
+	if task_board.is_open {
+		task_board.pos = task_board_get_start_pos()
+	}
+
+	if ve.key_is_pressed(.O) && task_board.is_open && !task_board.closing {
+		task_board.closing = true
+		task_board.is_open = false
+		task_board.opening = false
+		task_board.pos = task_board_get_start_pos()
+		task_board.closing_t = 0
+	}
+
+	if task_board.closing {
+		task_board.closing_t += ve.time_get_delta() * 7
+		task_board.pos = linalg.lerp(task_board.pos, task_board_get_end_pos(), task_board.closing_t)
+
+		if task_board.closing_t > 1 {
+			task_board.closing = false
+			task_board.is_open = false
+			task_board.pos = task_board_get_end_pos()
+		}
+	}
+}
+
+destroy_task_board :: proc() {
 
 }
 
@@ -394,7 +634,7 @@ find_combination :: proc() -> (Combination_Info, bool) {
 }
 
 init_microwave :: proc() {
-	microwave.pos = vec3{0, 0, BASE_Z + 3}
+	microwave.pos = vec3{0, 0, BASE_Z + 1.5}
 	microwave.scale = 1
 
 	append(&kinematic_box, Bounding_Box{center = microwave.pos - {1.7, 0, -0.3}, half_size = {1., 3, 1}})

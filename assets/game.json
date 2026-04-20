@@ -2,7 +2,7 @@
 	"default_object" : "gun"
 	"coal_object" : "coal",
 	"timer_values" : [1, 2, 3],
-	"speed_of_hanger" : 0.01,
+	"speed_of_hanger" : 0.03,
 	"objects": [
 		{
 			"name" : "gun",
@@ -12,18 +12,20 @@
 			"scale" : "0.3;0.3;0.3",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"card" : "assets/textures/cards/card_placeholder.png"
 			"sound_drop" : "assets/sounds/apple_drop.mp3",
 			"sound_eat" : "assets/sounds/apple_eat.mp3",
 			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
 		},
 		{
 			"name" : "apple",
-			"saturation" : -0.2,
+			"saturation" : 0.5,
 			"model" : "assets/models/Nightstand",
 			"box" : "0.5;0.5;0.5",
 			"scale" : "1;1;1",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"card" : "assets/textures/cards/card_apple.png"
 			"sound_drop" : "assets/sounds/apple_drop.mp3",
 			"sound_eat" : "assets/sounds/apple_eat.mp3",
 			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
@@ -36,6 +38,7 @@
 			"scale" : "0.3;0.3;0.1",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"card" : "assets/textures/cards/card_red_apple.png"
 			"sound_drop" : "assets/sounds/apple_drop.mp3",
 			"sound_eat" : "assets/sounds/apple_eat.mp3",
 			"sound_pickup" : "assets/sounds/apple_pickup.mp3",
@@ -48,6 +51,7 @@
 			"scale" : "0.3;0.8;0.3",
 			"rotation" : "0;0;0",
 			"origin_offset" : "0.0;-0.25;0.0",
+			"card" : "assets/textures/cards/card_placeholder.png"
 			"sound_drop" : "assets/sounds/apple_drop.mp3",
 			"sound_eat" : "assets/sounds/apple_eat.mp3",
 			"sound_pickup" : "assets/sounds/apple_pickup.mp3",

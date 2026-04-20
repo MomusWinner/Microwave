@@ -87,6 +87,8 @@ Resources :: struct {
 		pipe:                  Model,
 		rope:                  Model,
 		hp:                    Model,
+		card:                  []ve.Mesh,
+		task_board:            Model,
 		microwave:             Model,
 		microwave_door:        Model,
 		microwave_open_button: Model,
@@ -320,13 +322,13 @@ load_game_settings :: proc() {
 		R.s.timer_values[i] = cast(int)value.(json.Float)
 	}
 
-	log.info(R.s.items)
 }
 
 Item_Info :: struct {
 	name:          string,
 	saturation:    f32,
 	model_path:    string,
+	card:          ve.Texture,
 	box:           Bounding_Box,
 	scale:         vec3,
 	rotation:      vec3,
@@ -349,6 +351,7 @@ load_items :: proc(array: json.Array) {
 		}
 
 		saturation := cast(f32)item["saturation"].(json.Float)
+		card := load_texture(item["card"].(json.String))
 
 		drop_sound := strings.clone(item["sound_drop"].(json.String))
 		_, has_drop := R.sounds.item_sounds[drop_sound]
@@ -386,6 +389,7 @@ load_items :: proc(array: json.Array) {
 		R.s.items[name] = Item_Info {
 			name          = name,
 			saturation    = saturation,
+			card          = card,
 			model_path    = model_path,
 			sound_drop    = drop_sound,
 			sound_pickup  = pickup_sound,
@@ -458,7 +462,6 @@ load_pipe :: proc(j: json.Object) {
 		append(&pipe_info.items, Pipe_Item_Info{name = name, percent = percent})
 	}
 	R.s.pipe = pipe_info
-	log.info(R.s.pipe)
 }
 
 load_models :: proc() {
@@ -468,6 +471,10 @@ load_models :: proc() {
 		ve.create_primitive_cube({GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_WIDTH / 2}),
 	)
 	model_add_single_material(&R.models.ground, create_light_material(color = {0.4, 0.2, 0}))
+
+	R.models.card = ve.load_meshes("assets/models/card/card.obj")
+	R.models.task_board = load_model("assets/models/card/card.obj")
+	model_add_single_material(&R.models.task_board, create_light_material(color = {0.4, 0.2, 0.1}))
 
 	microwave_texture := load_texture("assets/models/microwave/microwavetexture.png")
 	microwave_door_texture := load_texture("assets/models/microwave/door_UV.png")
