@@ -3,7 +3,7 @@
 	"materials" : [
 		{
 			"name": "light",
-			"texture" : "",
+			"texture" : "blood_tex.png",
 	 		"color" : "0.8;0.1;0.1",
 		}
 	],

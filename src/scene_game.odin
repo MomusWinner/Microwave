@@ -170,10 +170,10 @@ game_scene_init :: proc(s: ^Scene) {
 	rope_is_taked = false
 
 	// hp
-	hp_pos = {2.913, 0.0, 6.744}
+	hp_pos = {2.913, 0.7, 6.744}
 	hp_width = 0.3
-	hp_max_size = 30
-	hp_saturation = 0.5
+	hp_max_size = 26
+	hp_saturation = 1
 
 	game_is_over = false
 
@@ -363,6 +363,8 @@ game_scene_draw :: proc(s: ^Scene) {
 		R.models.hp,
 		linalg.mat4Translate(hp_pos) * linalg.mat4Scale({hp_width, hp_max_size * (hp_saturation / 1), hp_width}),
 	)
+
+	renderer_draw_model(&G.r, R.models.intestines, linalg.mat4Translate(hp_pos + {0, 1.2, 0}) * linalg.mat4Scale(1.3))
 
 	draw_items()
 	draw_task_board()

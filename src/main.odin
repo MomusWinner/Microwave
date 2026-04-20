@@ -91,6 +91,7 @@ Resources :: struct {
 		rope:                     Model,
 		hp:                       Model,
 		card:                     []ve.Mesh,
+		intestines:               Model,
 		task_board:               Model,
 		microwave:                Model,
 		microwave_door:           Model,
@@ -483,6 +484,9 @@ load_models :: proc() {
 	R.models.card = ve.load_meshes("assets/models/card/card.obj")
 	R.models.task_board = load_item_model("assets/models/task_board")
 
+	R.models.intestines = load_item_model("assets/models/intestines/")
+	R.models.hp = load_item_model("assets/models/hp")
+
 	microwave_texture := load_texture("assets/models/microwave/microwavetexture.png")
 	microwave_door_texture := load_texture("assets/models/microwave/door_UV.png")
 	microwave_button_texture := load_texture("assets/models/microwave/buttons_UV.png")
@@ -499,7 +503,6 @@ load_models :: proc() {
 	model_add_single_material(&R.models.microwave_button_holders, create_light_material(microwave_button_texture))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(microwave_button_texture))
 
-	R.models.hp = load_item_model("assets/models/hp")
 	R.models.pipe = load_item_model("assets/models/pipe")
 	R.models.rope = load_item_model("assets/models/rope")
 
