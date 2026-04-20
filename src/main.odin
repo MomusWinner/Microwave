@@ -147,7 +147,7 @@ main :: proc() {
 	ve.start(
 		{
 			gfx = {swapchain_sample_count = ._1, attachments = {.Depth, .Stencil}},
-			window = {width = 800, height = 800, resizable = true, title = "LD"},
+			window = {width = 800, height = 800, fullscreen = true, resizable = true, title = "LD"},
 		},
 	)
 
