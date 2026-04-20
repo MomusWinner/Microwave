@@ -861,6 +861,7 @@ update_microwave :: proc() {
 	if ve.mouse_button_is_start_down(.Left) &&
 	   len(microwave.items) != 0 &&
 	   !microwave.is_working &&
+	   !microwave.is_open &&
 	   !microwave.opening &&
 	   !microwave.closing {
 		collision := ray_get_collision_bounding_box(ray, microwave.start_button_box)
