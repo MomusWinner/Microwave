@@ -73,6 +73,9 @@ Resources :: struct {
 	},
 	sounds:     struct {
 		bg:               Sound,
+		pipe:             Multiple_Sound,
+		rope_pull:        Multiple_Sound,
+		rope_release:     Multiple_Sound,
 		item_sounds:      map[string]Sound,
 		microwave_beep:   Sound,
 		microwave_close:  Sound,
@@ -282,7 +285,10 @@ main :: proc() {
 
 load_sounds :: proc() {
 	R.sounds.bg = load_bg_music("assets/sounds/ambient.mp3")
-	sound_set_volume(&R.sounds.bg, 20)
+	sound_set_volume(&R.sounds.bg, 70)
+	R.sounds.pipe = load_multiple_sound("assets/sounds/pipe.mp3", 5)
+	R.sounds.rope_pull = load_multiple_sound("assets/sounds/rope_pull.mp3", 5)
+	R.sounds.rope_release = load_multiple_sound("assets/sounds/rope_release.mp3", 5)
 	R.sounds.microwave_beep = load_sound("assets/sounds/microwave_beep.mp3")
 	R.sounds.microwave_close = load_sound("assets/sounds/microwave_close.mp3")
 	R.sounds.microwave_finish = load_sound("assets/sounds/microwave_finish.mp3")

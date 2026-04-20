@@ -573,6 +573,7 @@ update_rope :: proc() {
 		if collision.hit {
 			rope_take_offset_y = rope_pos.y - collision.point.y
 			rope_is_taked = true
+			multiple_sound_play(&R.sounds.rope_pull)
 		} else {
 			rope_is_taked = false
 		}
@@ -580,6 +581,7 @@ update_rope :: proc() {
 
 	if ve.mouse_button_is_start_up(.Left) {
 		rope_is_taked = false
+		multiple_sound_play(&R.sounds.rope_pull)
 	}
 
 	if rope_is_taked {
@@ -603,6 +605,7 @@ update_rope :: proc() {
 			rope_pulled = false
 		}
 	} else if math.abs(rope_pos.y - start_rope_pos.y) > 0.02 {
+
 		rope_pulled = false
 		dir := linalg.normalize(start_rope_pos.y - rope_pos.y)
 		rope_pos.y += dir * 1 * ve.time_get_delta()
@@ -1015,6 +1018,7 @@ create_random_pipe_item :: proc(pos: vec3) -> ^Item {
 	if !find {
 		log.panic("Incorrect pipe settings")
 	}
+	multiple_sound_play(&R.sounds.pipe)
 
 	return create_item(item_info.name, pos)
 }

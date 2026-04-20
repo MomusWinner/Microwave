@@ -43,7 +43,7 @@ load_sound :: proc(path: string, loc := #caller_location) -> Sound {
 	sound := new(ma.sound)
 	result := ma.sound_init_from_file(&ctx.e, cpath, {}, nil, nil, sound)
 	if result != .SUCCESS {
-		log.panic("Miniaudio soudn loading failed. Result:", result, location = loc)
+		log.panic("Miniaudio soudn loading failed. Result:", result, path, location = loc)
 	}
 
 	return Sound{source = sound}
@@ -112,6 +112,7 @@ bg: Background_Music
 
 load_bg_music :: proc(path: string) -> Sound {
 	s := load_sound(path)
+	sound_set_looping(&s, true)
 	ma.sound_set_fade_start_in_milliseconds(
 		s.source,
 		0.01,
@@ -135,9 +136,10 @@ Multiple_Sound :: struct {
 	sounds: []Sound,
 }
 
-load_multiple_sound :: proc(path: string, max: int = 5) -> Multiple_Sound {
+load_multiple_sound :: proc(path: string, max: int = 5, volume: f32 = 1) -> Multiple_Sound {
 	sounds := make([]Sound, max)
 	sounds[0] = load_sound(path)
+	sound_set_volume(&sounds[0], volume)
 
 	for i in 1 ..< max {
 		sounds[i] = sound_clone(sounds[0])
