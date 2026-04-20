@@ -285,7 +285,7 @@ main :: proc() {
 
 load_sounds :: proc() {
 	R.sounds.bg = load_bg_music("assets/sounds/ambient.mp3")
-	sound_set_volume(&R.sounds.bg, 70)
+	sound_set_volume(&R.sounds.bg, 40)
 	R.sounds.pipe = load_multiple_sound("assets/sounds/pipe.mp3", 5)
 	R.sounds.rope_pull = load_multiple_sound("assets/sounds/rope_pull.mp3", 5)
 	R.sounds.rope_release = load_multiple_sound("assets/sounds/rope_release.mp3", 5)
