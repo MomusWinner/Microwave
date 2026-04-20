@@ -106,7 +106,7 @@ create_renderer :: proc() -> Renderer {
 	postproc_ubo := create_ubo_postprocessing()
 	ubo_postprocessing_set_texture(postproc_ubo, screen_texture)
 	ubo_postprocessing_set_brightness_texture(postproc_ubo, screen_brightness_texture)
-	ubo_postprocessing_set_exposure(postproc_ubo, 0.5)
+	ubo_postprocessing_set_exposure(postproc_ubo, 0.4)
 
 	uicamera: ve.Camera
 	ve.init_camera(&uicamera, .Orthographic)
@@ -119,7 +119,7 @@ create_renderer :: proc() -> Renderer {
 		ui_camera = uicamera,
 		shadow_rt = rt,
 		shadow_texture = shadow_map_texture,
-		lsource = create_light_source(shadow_map_texture),
+		lsource = create_light_source(shadow_map_texture, {0.75, 0.5, 0.5}),
 		screen_rt = screen_rt,
 		screen_texture = screen_texture,
 		brightness_texture = screen_brightness_texture,
