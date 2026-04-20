@@ -5,7 +5,6 @@ import linalg "core:math/linalg/glsl"
 import "lib:ve"
 
 DEPTH_SIZE :: 2048
-DOWNSCALE :: 2
 
 @(buffer)
 Postprocessing_UBO :: struct {
@@ -106,7 +105,7 @@ create_renderer :: proc() -> Renderer {
 	postproc_ubo := create_ubo_postprocessing()
 	ubo_postprocessing_set_texture(postproc_ubo, screen_texture)
 	ubo_postprocessing_set_brightness_texture(postproc_ubo, screen_brightness_texture)
-	ubo_postprocessing_set_exposure(postproc_ubo, 0.4)
+	ubo_postprocessing_set_exposure(postproc_ubo, 0.45)
 
 	uicamera: ve.Camera
 	ve.init_camera(&uicamera, .Orthographic)
@@ -290,7 +289,11 @@ create_light_source :: proc(shadow_map: ve.Texture, color: vec3 = {1, 1, 1}) -> 
 }
 
 get_downscale_size :: proc() -> (int, int) {
-	return cast(int)(cast(f32)ve.screen_get_width() / DOWNSCALE), cast(int)(cast(f32)ve.screen_get_height() / DOWNSCALE)
+	downscale: f32 = 2
+	if ve.screen_get_height() > 1900 {
+		downscale = 3
+	}
+	return cast(int)(cast(f32)ve.screen_get_width() / downscale), cast(int)(cast(f32)ve.screen_get_height() / downscale)
 }
 
 create_light_material :: proc(
