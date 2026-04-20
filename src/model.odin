@@ -113,8 +113,11 @@ load_item_model :: proc(path: string) -> Model {
 	}
 
 	mesh_to_material := make([dynamic]int, len(model.meshes))
+	if len(model.meshes) != len(fields["mesh_to_material"].(json.Array)) {
+		log.panic("Incorrect mesh count or invalid meta", path)
+	}
 	for m, i in fields["mesh_to_material"].(json.Array) {
-		index := m.(json.Integer)
+		index := cast(int)m.(json.Float)
 		mesh_to_material[i] = cast(int)index
 	}
 
