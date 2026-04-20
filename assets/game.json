@@ -2,6 +2,7 @@
 	"default_object" : "gun"
 	"coal_object" : "coal",
 	"timer_values" : [1, 2, 3],
+	"final_object" : "red_apple",
 	"speed_of_hanger" : 0.00,
 	"objects": [
 		{

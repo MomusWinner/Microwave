@@ -149,6 +149,9 @@ game_over_text: Text
 eating_t: f32
 eating_item: Id
 
+is_finished: bool
+finish_text: Text
+
 game_scene_init :: proc(s: ^Scene) {
 	bg_start(R.sounds.bg)
 
@@ -157,6 +160,14 @@ game_scene_init :: proc(s: ^Scene) {
 		&game_over_text,
 		game_over_text.pos - {game_over_text.width / 2, game_over_text.height / 2 + 0.3, 1},
 	)
+
+	if finish_text.font == nil {
+		finish_text = create_text(&R.fonts.kiwisoda, "FINISH\nPress Enter to Restart", {0, 0.0, 0}, {1, 1, 1}, 0.01)
+		text_set_position(
+			&finish_text,
+			game_over_text.pos - {game_over_text.width / 2, game_over_text.height / 2 + 0.3, 1},
+		)
+	}
 
 	pipe_pos = {-3.7, 2.5, BASE_Z}
 	eating_item = INVALID_ID
@@ -176,6 +187,7 @@ game_scene_init :: proc(s: ^Scene) {
 	hp_saturation = 1
 
 	game_is_over = false
+	is_finished = false
 
 	append(&kinematic_box, Bounding_Box{half_size = {100, 0.5, 100}, center = {0, -0.5, 0}})
 	init_microwave()
@@ -216,10 +228,14 @@ eat_item :: proc(id: Id) {
 		hp_saturation = 1
 	}
 	complete_card(item.name)
+
+	if item.name == R.s.final_item {
+		is_finished = true
+	}
 }
 
 game_scene_update :: proc(s: ^Scene) {
-	if game_is_over {
+	if game_is_over || is_finished {
 		if ve.key_is_pressed(.Enter) {
 			game_scene_reset()
 			game_scene_init(s)
@@ -349,6 +365,10 @@ game_scene_update :: proc(s: ^Scene) {
 game_scene_draw :: proc(s: ^Scene) {
 	if game_is_over {
 		draw_uitext(&game_over_text)
+	}
+
+	if is_finished {
+		draw_uitext(&finish_text)
 	}
 
 	trf: ve.Transform

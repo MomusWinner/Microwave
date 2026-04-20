@@ -54,6 +54,7 @@ Resources :: struct {
 		// item_info by name
 		coal_item:       string,
 		default_item:    string,
+		final_item:      string,
 		items:           map[string]Item_Info,
 		speed_of_hanger: f32,
 		combinations:    [dynamic]Combination_Info,
@@ -317,6 +318,7 @@ load_game_settings :: proc() {
 	load_combinations(fields["combinations"].(json.Array))
 
 	R.s.default_item = strings.clone(fields["default_object"].(json.String))
+	R.s.final_item = strings.clone(fields["final_object"].(json.String))
 	R.s.coal_item = strings.clone(fields["coal_object"].(json.String))
 	R.s.speed_of_hanger = cast(f32)fields["speed_of_hanger"].(json.Float)
 
@@ -327,7 +329,6 @@ load_game_settings :: proc() {
 	for value, i in timer_values_json {
 		R.s.timer_values[i] = cast(int)value.(json.Float)
 	}
-
 }
 
 Item_Info :: struct {
