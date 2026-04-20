@@ -33,7 +33,7 @@ sound_play :: proc(path: string, loc := #caller_location) {
 	cpath := strings.clone_to_cstring(path, context.temp_allocator)
 	result := ma.engine_play_sound(&ctx.e, cpath, nil)
 	if result != .SUCCESS {
-		log.panic("Miniaudio soudn loading failed. Result:", result, location = loc)
+		log.panic("Miniaudio soudn loading failed. Result:", result, path, location = loc)
 	}
 }
 
