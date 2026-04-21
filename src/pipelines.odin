@@ -18,13 +18,8 @@ load_pipelines :: proc() {
 create_base_pipeline :: proc() -> ve.Graphics_Pipeline {
 	stages := ve.Stage_Infos{}
 
-	when !ODIN_DEBUG {
-		vert := #load("../shaders/base.vert.spv")
-		frag := #load("../shaders/base.frag.spv")
-	} else {
-		vert := "shaders/base.vert"
-		frag := "shaders/base.frag"
-	}
+	vert := "shaders/base.vert"
+	frag := "shaders/base.frag"
 
 	sm.push_back_elems(
 		&stages,
@@ -46,13 +41,8 @@ create_text_pipeline :: proc() -> ve.Graphics_Pipeline {
 
 	stages := ve.Stage_Infos{}
 
-	when !ODIN_DEBUG {
-		vert := #load("../shaders/text.vert.spv")
-		frag := #load("../shaders/text.frag.spv")
-	} else {
-		vert := "shaders/text.vert"
-		frag := "shaders/text.frag"
-	}
+	vert := "shaders/text.vert"
+	frag := "shaders/text.frag"
 
 	sm.push_back_elems(
 		&stages,
