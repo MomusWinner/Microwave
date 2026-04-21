@@ -272,7 +272,7 @@ game_scene_update :: proc(s: ^Scene) {
 	if eating_item != INVALID_ID {
 		eating_t += ve.time_get_delta() * 3
 		item := get_item(eating_item)
-		item.box.center = linalg.lerp(item.box.center, G.player.camera.position, eating_t)
+		item.box.center = linalg.lerp(item.box.center, G.player.camera.position + {0, -0.3, 1}, eating_t)
 		if eating_t > 1 {
 			play_item_eat_sound(eating_item)
 			eat_item(eating_item)
