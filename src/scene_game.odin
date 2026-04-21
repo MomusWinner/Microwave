@@ -724,7 +724,7 @@ init_microwave :: proc() {
 
 	append(&kinematic_box, Bounding_Box{center = microwave.pos - {1.7, 0, -0.3}, half_size = {1., 3, 1}})
 	append(&kinematic_box, Bounding_Box{center = microwave.pos + {2.5, 0, 0.1}, half_size = {1., 3, 1}})
-	append(&kinematic_box, Bounding_Box{center = microwave.pos - {0, 0.5, 0}, half_size = {4, 0.8, 1}})
+	append(&kinematic_box, Bounding_Box{center = microwave.pos - {0, 0.5, 0}, half_size = {4, 0.73, 1}})
 
 	microwave.close_door_box = Bounding_Box {
 		center    = microwave.pos + microwave.scale * vec3{2.153, 1.084, -3.194},
