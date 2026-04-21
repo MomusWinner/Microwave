@@ -10,6 +10,8 @@ import "core:slice"
 import "core:strings"
 import "lib:ve"
 
+DEBUG_DRAW :: #config(DEBUG_DRAW, ODIN_DEBUG)
+
 create_game_scene :: proc() -> Scene {
 	return Scene {
 		init = game_scene_init,
@@ -363,13 +365,16 @@ game_scene_update :: proc(s: ^Scene) {
 		}
 	}
 
-	if ve.key_is_down(.C) {
-		draw_box(exit_box)
-		draw_box(get_rope_box())
-		draw_items_debug()
-		for k, i in kinematic_box {
-			if i == 0 do continue
-			draw_box(k)
+	when DEBUG_DRAW {
+		if ve.key_is_down(.C) {
+
+			draw_box(exit_box)
+			draw_box(get_rope_box())
+			draw_items_debug()
+			for k, i in kinematic_box {
+				if i == 0 do continue
+				draw_box(k)
+			}
 		}
 	}
 
@@ -845,12 +850,14 @@ update_microwave :: proc() {
 		}
 	}
 
-	if ve.key_is_down(.C) {
-		draw_box(microwave.close_door_box)
-		draw_box(microwave.thingamagic_box)
-		draw_box(microwave.open_button)
-		draw_box(microwave.start_button_box)
-		draw_box(microwave.drop_box)
+	when DEBUG_DRAW {
+		if ve.key_is_down(.C) {
+			draw_box(microwave.close_door_box)
+			draw_box(microwave.thingamagic_box)
+			draw_box(microwave.open_button)
+			draw_box(microwave.start_button_box)
+			draw_box(microwave.drop_box)
+		}
 	}
 
 	if ve.mouse_button_is_start_down(.Left) {
