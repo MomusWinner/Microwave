@@ -1,9 +1,9 @@
 {
-	"model": "intestines.obj"
+	"model": "hp.obj"
 	"materials" : [
 		{
 			"name": "light",
-			"texture" : "intestines_tex.png",
+			"texture" : "tex.png",
 	 		"color" : "1;1;1",
 		}
 	],

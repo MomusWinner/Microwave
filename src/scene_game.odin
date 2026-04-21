@@ -403,7 +403,7 @@ game_scene_draw :: proc(s: ^Scene) {
 		linalg.mat4Translate(hp_pos) * linalg.mat4Scale({hp_width, hp_max_size * (hp_saturation / 1), hp_width}),
 	)
 
-	renderer_draw_model(&G.r, R.models.intestines, linalg.mat4Translate(hp_pos + {0, 1.2, 0}) * linalg.mat4Scale(1.3))
+	renderer_draw_model(&G.r, R.models.intestines, linalg.mat4Translate(hp_pos + {0, 0, 0}) * linalg.mat4Scale(1.3))
 
 	draw_items()
 	draw_task_board()
