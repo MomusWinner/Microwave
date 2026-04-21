@@ -1,0 +1,16 @@
+{
+  "model": "sausages.obj",
+  "materials" : [
+    {
+      "name": "light",
+      "texture" : "sausage_tex.png",
+      "color" : "1;1;1"
+    },
+    {
+      "name": "light",
+      "texture" : "sausages_box_tex.png",
+      "color" : "1;1;1"
+    }
+  ],
+  "mesh_to_material" : [0,1]
+}

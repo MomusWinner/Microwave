@@ -1,0 +1,11 @@
+{
+    "model": "nail.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "nail_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

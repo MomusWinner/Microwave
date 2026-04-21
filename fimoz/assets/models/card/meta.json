@@ -1,0 +1,11 @@
+{
+    "model": "card.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "card_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

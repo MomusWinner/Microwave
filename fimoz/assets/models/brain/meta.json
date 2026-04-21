@@ -1,0 +1,11 @@
+{
+    "model": "brain.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "brain_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

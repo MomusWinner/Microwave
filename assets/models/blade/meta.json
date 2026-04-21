@@ -1,0 +1,11 @@
+{
+    "model": "blade.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "blade_tex.jpg",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

@@ -1,0 +1,11 @@
+{
+    "model": "hair.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "hair_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

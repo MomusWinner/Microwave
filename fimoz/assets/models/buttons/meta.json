@@ -1,0 +1,11 @@
+{
+    "model": "button_holders.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "button_holders_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

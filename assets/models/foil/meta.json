@@ -1,0 +1,11 @@
+{
+    "model": "foil.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "foil_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

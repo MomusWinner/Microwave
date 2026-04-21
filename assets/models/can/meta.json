@@ -1,0 +1,11 @@
+{
+    "model": "wormcannot.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "wormcan_empty_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

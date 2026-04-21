@@ -1,0 +1,11 @@
+{
+    "model": "corkboard.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "corkboard_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

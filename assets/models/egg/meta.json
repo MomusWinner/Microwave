@@ -1,0 +1,11 @@
+{
+    "model": "egg.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "egg_tex.png",
+            "color" : "1;1;1",
+        }
+    ],
+    "mesh_to_material" : []
+}

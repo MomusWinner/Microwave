@@ -1,0 +1,11 @@
+{
+    "model": "coal.obj"
+    "materials" : [
+        {
+            "name": "light",
+            "texture" : "coal_tex.png",
+            "color" : "1;1;1"
+        }
+    ],
+    "mesh_to_material" : []
+}

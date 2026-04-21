@@ -1,0 +1,11 @@
+{
+	"model": "pipe.obj"
+	"materials" : [
+		{
+			"name": "light",
+			"texture" : "pipe_tex.png",
+	 		"color" : "1;1;1",
+		}
+	],
+	"mesh_to_material" : []
+}
