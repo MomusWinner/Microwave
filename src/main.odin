@@ -86,6 +86,7 @@ Resources :: struct {
 		microwave_switch: Sound,
 	},
 	models:     struct {
+		exit:                     Model,
 		ground:                   Model,
 		enemy:                    Model,
 		pipe:                     Model,
@@ -115,6 +116,8 @@ Resources :: struct {
 
 G: Global
 R: Resources
+
+exit: bool = false
 
 main :: proc() {
 	when ODIN_DEBUG {
@@ -218,6 +221,10 @@ main :: proc() {
 			if (ve.key_is_pressed(.R)) {
 				ve.hot_reload_shaders()
 			}
+		}
+
+		if exit {
+			break
 		}
 
 		// speed: f32 = 0.4
@@ -473,6 +480,8 @@ load_pipe :: proc(j: json.Object) {
 
 load_models :: proc() {
 	R.primitives.square = ve.create_primitive_square()
+
+	R.models.exit = load_item_model("assets/models/exit/")
 
 	ground_texture := ve.load_texture("assets/textures/big_concrete_tex.png")
 	R.models.ground = create_model_from_mesh(

@@ -152,6 +152,11 @@ eating_item: Id
 is_finished: bool
 finish_text: Text
 
+exit_box: Bounding_Box = Bounding_Box {
+	center    = {5, 4, BASE_Z},
+	half_size = {0.6, 0.6, 0.1},
+}
+
 game_scene_init :: proc(s: ^Scene) {
 	bg_start(R.sounds.bg)
 
@@ -359,11 +364,19 @@ game_scene_update :: proc(s: ^Scene) {
 	}
 
 	if ve.key_is_down(.C) {
+		draw_box(exit_box)
 		draw_box(get_rope_box())
 		draw_items_debug()
 		for k, i in kinematic_box {
 			if i == 0 do continue
 			draw_box(k)
+		}
+	}
+
+	if ve.mouse_button_is_down(.Left) {
+		collision := ray_get_collision_bounding_box(ray, exit_box)
+		if collision.hit {
+			exit = true
 		}
 	}
 }
@@ -394,6 +407,7 @@ game_scene_draw :: proc(s: ^Scene) {
 
 	draw_items()
 	draw_task_board()
+	renderer_draw_model(&G.r, R.models.exit, linalg.mat4Translate(exit_box.center))
 }
 
 game_scene_reset :: proc() {
