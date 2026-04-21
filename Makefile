@@ -1,4 +1,4 @@
-APP_NAME := sav
+APP_NAME := crude_food
 SRC_DIR := src
 BIN_DIR := bin
 DEBUG_BIN := $(BIN_DIR)/debug/$(APP_NAME)
