@@ -194,7 +194,7 @@ game_scene_init :: proc(s: ^Scene) {
 	rope_is_taked = false
 
 	// hp
-	hp_pos = {2.913, 0.7, 6.744}
+	hp_pos = {3.5, 0.7, 6.744}
 	hp_width = 0.3
 	hp_max_size = 26
 	hp_saturation = 1
