@@ -266,6 +266,18 @@ game_scene_update :: proc(s: ^Scene) {
 			eating_item = taked_item
 			taked_item = INVALID_ID
 			eating_t = 0
+		} else {
+			for id, item in items {
+				collision := ray_get_collision_bounding_box(ray, item.box)
+				if collision.hit {
+					if slice.contains(microwave.items[:], id) && !microwave.is_open {
+						continue
+					}
+					eating_item = id
+					play_item_pickup_sound(eating_item)
+					break
+				}
+			}
 		}
 	}
 
