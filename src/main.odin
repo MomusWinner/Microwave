@@ -118,6 +118,7 @@ G: Global
 R: Resources
 
 exit: bool = false
+started: bool
 
 main :: proc() {
 	when ODIN_DEBUG {
@@ -152,7 +153,7 @@ main :: proc() {
 	ve.start(
 		{
 			gfx = {swapchain_sample_count = ._1, attachments = {.Depth, .Stencil}},
-			window = {width = 800, height = 800, fullscreen = true, resizable = true, title = "LD"},
+			window = {width = 800, height = 800, fullscreen = false, resizable = true, title = "Crude Food"},
 		},
 	)
 
@@ -235,12 +236,7 @@ main :: proc() {
 		// 	G.r.lsource.camera.position.z,
 		// }
 
-		@(static) started: bool
 		if !started {
-			if ve.key_is_pressed(.Enter) {
-				started = true
-				G.scenes.current_scene = &G.scenes.game_scane
-			}
 			when ODIN_DEBUG {
 				started = true
 				G.scenes.current_scene = &G.scenes.game_scane
