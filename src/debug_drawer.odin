@@ -1,7 +1,6 @@
 package ld
 
 import "core:log"
-import "core:math"
 import linalg "core:math/linalg/glsl"
 import "lib:ve"
 
@@ -64,7 +63,7 @@ draw_line :: proc(start, end: vec3, line_width: f32 = 0.05, color: vec3 = {1, 1,
 		scale := vec3{line_width, line_width, distance / 2}
 		trf := linalg.mat4Translate(position) * rotation * linalg.mat4Scale(scale)
 
-		renderer_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, trf, {h0 = ubo})
+		r_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, trf, {h0 = ubo})
 	}
 }
 
@@ -98,7 +97,7 @@ draw_box :: proc(box: Bounding_Box, color: vec3 = {1, 1, 1}) {
 			scale    = box.half_size,
 			position = box.center,
 		}
-		renderer_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, ve.trf_get_matrix(trf), {h0 = ubo})
+		r_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, ve.trf_get_matrix(trf), {h0 = ubo})
 	}
 }
 
@@ -110,7 +109,7 @@ draw_cube :: proc(position: vec3, scale: vec3 = 0.3, color: vec3 = {1, 1, 1}) {
 			scale    = scale,
 			position = position,
 		}
-		renderer_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, ve.trf_get_matrix(trf), {h0 = ubo})
+		r_draw_mesh(&G.r, drawer.cube, R.pipelines.primitive, ve.trf_get_matrix(trf), {h0 = ubo})
 	}
 }
 

@@ -37,7 +37,7 @@ menu_scene_draw :: proc(s: ^Scene) {
 	if elapsed_time > START_TIME {
 		draw_uitext(&start_text)
 	}
-	renderer_draw_model(&G.r, R.models.tutorial, linalg.mat4Rotate({1, 0, 0}, linalg.PI / 3) * linalg.mat4Scale(1.8))
+	r_draw_model(&G.r, R.models.tutorial, linalg.mat4Rotate({1, 0, 0}, linalg.PI / 3) * linalg.mat4Scale(1.8))
 }
 
 menu_scene_destroy :: proc(s: ^Scene) {

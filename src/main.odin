@@ -3,15 +3,12 @@ package ld
 import "core:encoding/json"
 import "core:fmt"
 import "core:log"
-import "core:math"
 import linalg "core:math/linalg/glsl"
 import "core:mem"
 import "core:os"
-import "core:strconv"
 import "core:strings"
 import "core:time"
 import "lib:ve"
-import vemath "lib:ve/math"
 
 TARGET_FPS :: 120
 FIXED_DELTA_TIME :: 1.0 / TARGET_FPS
@@ -220,7 +217,7 @@ main :: proc() {
 		// -- Begin Update ----------------------------------------
 		when ODIN_DEBUG {
 			if (ve.key_is_pressed(.R)) {
-				ve.hot_reload_shaders()
+				ve.shaders_hot_reload()
 			}
 		}
 
@@ -489,7 +486,7 @@ load_models :: proc() {
 	R.models.tutorial = load_item_model("assets/models/tutorial/")
 
 	// Task Board
-	R.models.card = ve.load_meshes("assets/models/card/card.obj")
+	R.models.card = ve.load_obj("assets/models/card/card.obj")
 	R.models.task_board = load_item_model("assets/models/task_board")
 
 	R.models.intestines = load_item_model("assets/models/intestines/")

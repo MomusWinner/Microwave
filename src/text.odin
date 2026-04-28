@@ -84,8 +84,8 @@ text_set_string :: proc(text: ^Text, text_str: string, loc := #caller_location) 
 	text.height = height
 }
 
-renderer_draw_text :: proc(text: ^Text, trf: mat4) {
-	renderer_draw_mesh(&G.r, text.mesh, R.pipelines.text, trf, ve.Handles{h0 = text.ubo})
+r_draw_text :: proc(text: ^Text, trf: mat4) {
+	r_draw_mesh(&G.r, text.mesh, R.pipelines.text, trf, ve.Handles{h0 = text.ubo})
 }
 
 draw_text :: proc(text: ^Text, pipeline: ve.Graphics_Pipeline) {

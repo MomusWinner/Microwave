@@ -5,10 +5,7 @@ import "core:fmt"
 import "core:log"
 import "core:os"
 import "core:path/slashpath"
-import "core:strconv"
-import "core:strings"
 import "lib:ve"
-import "vendor:cgltf"
 
 Material :: struct {
 	ubo:      ve.Uniform_Buffer,
@@ -35,7 +32,7 @@ load_model :: proc(path: string, loc := #caller_location) -> Model {
 
 	model_dir := root_dir
 
-	meshes := ve.load_meshes(model_dir)
+	meshes := ve.load_obj(model_dir)
 
 	model := Model {
 		meshes = meshes,
@@ -107,7 +104,6 @@ load_item_model :: proc(path: string) -> Model {
 	}
 
 	if len(materials) == 1 {
-		log.info("Add single material", materials[0])
 		model_add_single_material(&model, materials[0])
 		return model
 	}

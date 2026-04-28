@@ -7,7 +7,6 @@ import "core:math"
 import linalg "core:math/linalg/glsl"
 import "core:math/rand"
 import "core:slice"
-import "core:strings"
 import "lib:ve"
 
 DEBUG_DRAW :: #config(DEBUG_DRAW, ODIN_DEBUG)
@@ -304,7 +303,7 @@ game_scene_update :: proc(s: ^Scene) {
 	update_microwave()
 	update_rope()
 
-	if ve.mouse_button_is_start_down(.Left) {
+	if ve.mouse_button_is_just_pressed(.Left) {
 		for id, item in items {
 			collision := ray_get_collision_bounding_box(ray, item.box)
 			if collision.hit {
@@ -321,7 +320,7 @@ game_scene_update :: proc(s: ^Scene) {
 		}
 	}
 
-	if ve.mouse_button_is_start_up(.Left) {
+	if ve.mouse_button_is_just_released(.Left) {
 		if taked_item != INVALID_ID {
 			item := &items[taked_item]
 			item.velocity = last_taked_velocity * 0.3
@@ -409,22 +408,22 @@ game_scene_draw :: proc(s: ^Scene) {
 
 	trf: ve.Transform
 	ve.init_trf(&trf)
-	renderer_draw_model(&G.r, R.models.ground, linalg.mat4Translate(G.ground.center))
-	renderer_draw_model(&G.r, R.models.pipe, linalg.mat4Translate(pipe_pos))
-	renderer_draw_model(&G.r, R.models.rope, linalg.mat4Translate(rope_pos))
+	r_draw_model(&G.r, R.models.ground, linalg.mat4Translate(G.ground.center))
+	r_draw_model(&G.r, R.models.pipe, linalg.mat4Translate(pipe_pos))
+	r_draw_model(&G.r, R.models.rope, linalg.mat4Translate(rope_pos))
 	draw_microwave()
 
-	renderer_draw_model(
+	r_draw_model(
 		&G.r,
 		R.models.hp,
 		linalg.mat4Translate(hp_pos) * linalg.mat4Scale({hp_width, hp_max_size * (hp_saturation / 1), hp_width}),
 	)
 
-	renderer_draw_model(&G.r, R.models.intestines, linalg.mat4Translate(hp_pos + {0, 0, 0}) * linalg.mat4Scale(1.3))
+	r_draw_model(&G.r, R.models.intestines, linalg.mat4Translate(hp_pos + {0, 0, 0}) * linalg.mat4Scale(1.3))
 
 	draw_items()
 	draw_task_board()
-	renderer_draw_model(&G.r, R.models.exit, linalg.mat4Translate(exit_box.center))
+	r_draw_model(&G.r, R.models.exit, linalg.mat4Translate(exit_box.center))
 }
 
 game_scene_reset :: proc() {
@@ -585,14 +584,14 @@ init_task_board :: proc() {
 }
 
 draw_task_board :: proc() {
-	renderer_draw_model(
+	r_draw_model(
 		&G.r,
 		R.models.task_board,
 		linalg.mat4Translate(task_board.pos) * task_board.rotation * linalg.mat4Scale(task_board.scale),
 	)
 
 	for card in task_board.cards {
-		renderer_draw_model(
+		r_draw_model(
 			&G.r,
 			card.model,
 			linalg.mat4Translate(task_board.pos) *
@@ -661,7 +660,7 @@ destroy_task_board :: proc() {
 }
 
 update_rope :: proc() {
-	if ve.mouse_button_is_start_down(.Left) {
+	if ve.mouse_button_is_just_pressed(.Left) {
 		collision := ray_get_collision_bounding_box(ray, get_rope_box())
 		if collision.hit {
 			rope_take_offset_y = rope_pos.y - collision.point.y
@@ -672,7 +671,7 @@ update_rope :: proc() {
 		}
 	}
 
-	if ve.mouse_button_is_start_up(.Left) {
+	if ve.mouse_button_is_just_released(.Left) {
 		rope_is_taked = false
 		multiple_sound_play(&R.sounds.rope_pull)
 	}
@@ -872,14 +871,14 @@ update_microwave :: proc() {
 		}
 	}
 
-	if ve.mouse_button_is_start_down(.Left) {
+	if ve.mouse_button_is_just_pressed(.Left) {
 		collision := ray_get_collision_bounding_box(ray, microwave.thingamagic_box)
 		if collision.hit {
 			microwave.rotating_thingamagic = true
 		}
 	}
 
-	if ve.mouse_button_is_start_up(.Left) {
+	if ve.mouse_button_is_just_released(.Left) {
 		if microwave.rotating_thingamagic == true {
 			for v in THINGAMAGIC_ANGLES {
 				if v.value == microwave.thingamagic_value {
@@ -891,7 +890,7 @@ update_microwave :: proc() {
 		microwave.rotating_thingamagic = false
 	}
 
-	if ve.mouse_button_is_start_down(.Left) &&
+	if ve.mouse_button_is_just_pressed(.Left) &&
 	   len(microwave.items) != 0 &&
 	   !microwave.is_working &&
 	   !microwave.is_open &&
@@ -961,7 +960,7 @@ update_microwave :: proc() {
 		}
 	}
 
-	if ve.mouse_button_is_start_up(.Left) {
+	if ve.mouse_button_is_just_released(.Left) {
 		if microwave.rotating_thingamagic == true {
 			for v in THINGAMAGIC_ANGLES {
 				if v.value == microwave.thingamagic_value {
@@ -1035,11 +1034,7 @@ update_thingmagic_value :: proc(value: int) {
 }
 
 draw_microwave :: proc() {
-	renderer_draw_model(
-		&G.r,
-		R.models.microwave,
-		linalg.mat4Translate(microwave.pos) * linalg.mat4Scale(microwave.scale),
-	)
+	r_draw_model(&G.r, R.models.microwave, linalg.mat4Translate(microwave.pos) * linalg.mat4Scale(microwave.scale))
 
 	hinge := vec3{1.8364074, 0, -0.47745836} * microwave.scale
 	to_hinge := linalg.mat4Translate(-hinge)
@@ -1051,9 +1046,9 @@ draw_microwave :: proc() {
 		linalg.mat4FromQuat(linalg.quatAxisAngle({0, 1, 0}, microwave.door_rotation)) *
 		to_hinge *
 		linalg.mat4Scale(microwave.scale)
-	renderer_draw_model(&G.r, R.models.microwave_door, door_trf)
+	r_draw_model(&G.r, R.models.microwave_door, door_trf)
 
-	renderer_draw_model(
+	r_draw_model(
 		&G.r,
 		R.models.microwave_thingamagic,
 		linalg.mat4Translate(microwave.thingamagic_pos) *
@@ -1061,24 +1056,25 @@ draw_microwave :: proc() {
 		linalg.mat4Scale(microwave.scale),
 	)
 
-	renderer_draw_text(
+	r_draw_text(
 		&microwave.timer_text,
 		linalg.mat4Translate(microwave.timer_text.pos) * linalg.mat4Rotate({0, 1, 0}, math.PI),
 	)
 
-	renderer_draw_model(
+	r_draw_model(
 		&G.r,
 		R.models.microwave_button,
 		linalg.mat4Translate({0, 0, -0.1} + microwave.pos + microwave.start_start_button_anim_pos) *
 		linalg.mat4Scale(microwave.scale),
 	)
 
-	renderer_draw_model(
+	r_draw_model(
 		&G.r,
 		R.models.microwave_open_button,
 		linalg.mat4Translate(microwave.pos + microwave.start_open_button_anim_pos) * linalg.mat4Scale(microwave.scale),
 	)
-	renderer_draw_model(
+
+	r_draw_model(
 		&G.r,
 		R.models.microwave_button_holders,
 		linalg.mat4Translate(microwave.pos) * linalg.mat4Scale(microwave.scale),
@@ -1295,5 +1291,5 @@ draw_item :: proc(item: ^Item) {
 	assert(ok_item)
 	model, ok_model := R.models.items[item_info.model_path]
 	assert(ok_model)
-	renderer_draw_model(&G.r, model, linalg.mat4Translate(item.box.center) * item_info.trf)
+	r_draw_model(&G.r, model, linalg.mat4Translate(item.box.center) * item_info.trf)
 }

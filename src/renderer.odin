@@ -1,10 +1,13 @@
 package ld
 
 import "core:log"
+import "core:math"
 import linalg "core:math/linalg/glsl"
 import "lib:ve"
 
 DEPTH_SIZE :: 2048
+
+DOWNSCALE_TARGET_HEIGHT :: 700
 
 @(buffer)
 Postprocessing_UBO :: struct {
@@ -99,7 +102,6 @@ create_renderer :: proc() -> Renderer {
 		format = .RGBA_norm_u16,
 		sampler_info = NEAREST_FILTER_SAMPLER,
 	)
-	log.info(screen_brightness_texture)
 	ve.render_target_add_depth_attachment(&screen_rt)
 
 	postproc_ubo := create_ubo_postprocessing()
@@ -192,7 +194,7 @@ end_renderer :: proc(r: ^Renderer) {
 	clear(&r.ui_draw_calls)
 }
 
-renderer_draw_model :: proc(r: ^Renderer, m: Model, trf: mat4 = 1, handles: ve.Handles = {}) {
+r_draw_model :: proc(r: ^Renderer, m: Model, trf: mat4 = 1, handles: ve.Handles = {}) {
 	assert(handles.h0 == nil, "H0 resurved for Material UBO")
 	handles := handles
 
@@ -230,7 +232,7 @@ renderer_draw_model :: proc(r: ^Renderer, m: Model, trf: mat4 = 1, handles: ve.H
 // 	}
 // }
 
-renderer_draw_mesh :: proc(
+r_draw_mesh :: proc(
 	r: ^Renderer,
 	mesh: ve.Mesh,
 	pipeline: ve.Graphics_Pipeline,
@@ -250,13 +252,7 @@ uirenderer_draw_mesh :: proc(
 	append(&r.ui_draw_calls, Draw_Call{mesh = mesh, pipeline = pipeline, trf = trf, handles = handles})
 }
 
-renderer_draw_mesh_from_mtrl :: proc(
-	r: ^Renderer,
-	mesh: ve.Mesh,
-	mtrl: Material,
-	trf: mat4 = 1,
-	handles: ve.Handles = {},
-) {
+r_draw_mesh_from_mtrl :: proc(r: ^Renderer, mesh: ve.Mesh, mtrl: Material, trf: mat4 = 1, handles: ve.Handles = {}) {
 
 	assert(handles.h0 == nil, "H0 resurved for Material UBO")
 	handles := handles
@@ -289,10 +285,9 @@ create_light_source :: proc(shadow_map: ve.Texture, color: vec3 = {1, 1, 1}) -> 
 }
 
 get_downscale_size :: proc() -> (int, int) {
-	downscale: f32 = 2
-	if ve.screen_get_height() > 1900 {
-		downscale = 3
-	}
+	downscale: f32 = cast(f32)ve.screen_get_height() / DOWNSCALE_TARGET_HEIGHT
+	downscale = max(downscale, 1)
+	downscale = math.round(downscale)
 	return cast(int)(cast(f32)ve.screen_get_width() / downscale), cast(int)(cast(f32)ve.screen_get_height() / downscale)
 }
 
