@@ -4,7 +4,7 @@
 		{
 			"name": "light",
 			"texture" : "exit_tex.png",
-	 		"color" : "1;1;1",
+	 		"color" : "3;3;3",
 		}
 	],
 	"mesh_to_material" : []

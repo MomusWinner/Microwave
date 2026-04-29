@@ -95,7 +95,6 @@ create_renderer :: proc() -> Renderer {
 		&screen_rt,
 		format = .RGBA_norm_u16,
 		sampler_info = NEAREST_FILTER_SAMPLER,
-		clear_value = BACKGROUND,
 	)
 	screen_brightness_texture := ve.render_target_add_color_attachment(
 		&screen_rt,
@@ -168,13 +167,15 @@ end_renderer :: proc(r: ^Renderer) {
 	ve.end_render_target(&r.screen_rt)
 
 	for i in 0 ..< 3 {
+		brightness_color_attachment := []ve.Color_Attachment_Action{{index = 1, load_op = .Load, store_op = .Store}}
+
 		// Horizontal gaussian blur
-		ve.begin_render_target(&r.screen_rt, {1})
+		ve.begin_render_target(&r.screen_rt, brightness_color_attachment)
 		ve.draw_mesh(R.primitives.square, R.pipelines.gaussian_hor, handles = {h0 = r.brightness_texture})
 		ve.end_render_target(&r.screen_rt)
 
 		// Vertical gaussian blur
-		ve.begin_render_target(&r.screen_rt, {1})
+		ve.begin_render_target(&r.screen_rt, brightness_color_attachment)
 		ve.draw_mesh(R.primitives.square, R.pipelines.gaussian_ver, handles = {h0 = r.brightness_texture})
 		ve.end_render_target(&r.screen_rt)
 	}
@@ -291,10 +292,7 @@ get_downscale_size :: proc() -> (int, int) {
 	return cast(int)(cast(f32)ve.screen_get_width() / downscale), cast(int)(cast(f32)ve.screen_get_height() / downscale)
 }
 
-create_light_material :: proc(
-	texture: ve.Texture = ve.INVALID_TEXTURE_HANDLE,
-	color: vec3 = {1, 0.5, 0.5},
-) -> Material {
+create_light_material :: proc(texture: ve.Texture = ve.INVALID_TEXTURE_HANDLE, color: vec3 = {1, 1, 1}) -> Material {
 	ubo := create_ubo_light()
 	if texture != ve.INVALID_TEXTURE_HANDLE {
 		ubo_light_set_diffuse_texture(ubo, texture)

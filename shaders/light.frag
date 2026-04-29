@@ -107,7 +107,7 @@ void main() {
 		color = getLightUBO(H0()).diffuse_color;
 	}
 	else {
-		color = texture(gTextures2D[getLightUBO(H0()).diffuse_texture], fragTexCoord).rgb;
+		color = getLightUBO(H0()).diffuse_color * texture(gTextures2D[getLightUBO(H0()).diffuse_texture], fragTexCoord).rgb;
 	}
 
 	vec3 ambient = getLightUBO(H0()).ambient; //* lightColor;
@@ -117,12 +117,12 @@ void main() {
 
 	// calculate shadow
 	vec3 lighting = (ambient + (1.0 - shadow) * (dirLighting ) + spotLighting) * color;
+
 	outColor = vec4(lighting, 1);
 
-	outBrightColor = outColor;
-	// float brightness = dot(outColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-	// if(brightness > 1.0)
-	// 	outBrightColor = vec4(outColor.rgb, 1.0);
-	// else
-	// 	outBrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+	float brightness = dot(outColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+	if(brightness > 1.0)
+		outBrightColor = vec4(outColor.rgb, 1.0);
+	else
+		outBrightColor = vec4(0.0, 0.0, 0.0, 1.0);
 }

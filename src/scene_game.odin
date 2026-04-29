@@ -389,7 +389,7 @@ game_scene_update :: proc(s: ^Scene) {
 		}
 	}
 
-	if ve.mouse_button_is_down(.Left) {
+	if ve.mouse_button_is_just_pressed(.Left) {
 		collision := ray_get_collision_bounding_box(ray, exit_box)
 		if collision.hit {
 			exit = true

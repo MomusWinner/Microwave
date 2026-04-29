@@ -503,8 +503,11 @@ load_models :: proc() {
 	R.models.microwave_thingamagic = load_model("assets/models/microwave/thingamagic.obj")
 	model_add_single_material(&R.models.microwave, create_light_material(microwave_texture))
 	model_add_single_material(&R.models.microwave_door, create_light_material(microwave_door_texture))
-	model_add_single_material(&R.models.microwave_button, create_light_material(microwave_button_texture))
-	model_add_single_material(&R.models.microwave_open_button, create_light_material(microwave_button_texture))
+	model_add_single_material(&R.models.microwave_button, create_light_material(microwave_button_texture, color = 15))
+	model_add_single_material(
+		&R.models.microwave_open_button,
+		create_light_material(microwave_button_texture, color = 2),
+	)
 	model_add_single_material(&R.models.microwave_button_holders, create_light_material(microwave_button_texture))
 	model_add_single_material(&R.models.microwave_thingamagic, create_light_material(microwave_button_texture))
 

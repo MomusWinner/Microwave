@@ -1,10 +1,8 @@
 package ld
 
-import "core:log"
 import "core:math"
 import linalg "core:math/linalg/glsl"
 import "lib:ve"
-import rl "vendor:raylib"
 
 // Taked from raylib
 
